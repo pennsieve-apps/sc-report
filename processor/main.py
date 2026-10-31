@@ -206,7 +206,8 @@ def main() -> int:
     context = {"title": params["REPORT_TITLE"], "generated_at": generated, "app_version": own_prov["version"],
                "params": params, "study": st, "qc": qc, "integration": ig, "celltypes": ct, "markers": mk, "compare": cp,
                "atac": at, "regulome": rg, "methods": meth, "references": references, "credit": credit,
-               "errors": errors, "workflows": workflows, "omitted": figs.omitted, "fdr": fdr}
+               "errors": errors, "workflows": workflows, "omitted": figs.omitted, "fdr": fdr,
+               "platform": C.platform()}
     R.write_index(report_dir / "index.html", context)
     written = R.write_tables(tables_dir, context)
     texts = lambda s: {"observations": s["observations"], "caveats": s["caveats"], "facts": dict(s["facts"])} if s else None  # noqa: E731
@@ -216,8 +217,11 @@ def main() -> int:
                "markers": [{"label": r["label"], **texts(r)} for r in mk or []],
                "comparison": [{"label": r["label"], "de_n_significant": r.get("de_n_significant"), **texts(r)} for r in cp or []],
                "atac": texts(at), "regulome": [{"label": r["label"], **texts(r)} for r in rg or []],
-               "citations": [{"number": i + 1, "doi": r["doi"], "pmid": r.get("pmid") or None, "text": r["text"],
-                              "verifiedByReport": r["verified"]} for i, r in enumerate(references)],
+               "citations": [{"role": "platform", "number": None, "doi": C.PLATFORM_DOI,
+                              "pmid": C.platform()["record"].get("pmid") or None, "text": C.PLATFORM_STATEMENT,
+                              "verifiedByReport": True}]
+                            + [{"role": "method", "number": i + 1, "doi": r["doi"], "pmid": r.get("pmid") or None,
+                                "text": r["text"], "verifiedByReport": r["verified"]} for i, r in enumerate(references)],
                "inputData": [{"doi": d["doi"], "text": d["record"]["text"], "licence": d["record"].get("license"),
                               "n_samples": d["n_samples"]} for d in credit]}
     (tables_dir / "summary.json").write_text(json.dumps(A.clean(summary), indent=2, ensure_ascii=False) + "\n")

@@ -31,6 +31,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 PAPERS = {
+    # the platform: printed first in every report's citation section (not in CITATION.cff: the app also
+    # runs outside Pennsieve)
+    "pennsieve": "10.1038/s41597-025-06075-5",
     # the report's own
     "heumos": "10.1038/s41576-023-00586-w",
     "matplotlib": "10.1109/MCSE.2007.55",
@@ -98,6 +101,8 @@ PAPERS = {
     "pytorch_arxiv": "10.48550/arxiv.1912.01703",
     "scikit_image": "10.7717/peerj.453",
 }
+# In references.json but not in CITATION.cff: the platform paper (the app also runs outside Pennsieve).
+NOT_IN_CFF = {"10.1038/s41597-025-06075-5"}
 # Demo data: DOI -> Discover dataset id.
 DATASETS = {"10.26275/cxuf-ftav": 475, "10.26275/9qsp-i8dh": 480, "10.26275/oqxx-si9h": 465}
 
@@ -292,5 +297,5 @@ if __name__ == "__main__":
     if "--cff" in sys.argv:
         cff = ROOT / "CITATION.cff"
         head = cff.read_text().split("references:")[0]
-        cff.write_text(head + cff_refs(refs))
+        cff.write_text(head + cff_refs([r for r in refs if r["doi"] not in NOT_IN_CFF]))
         print(f"wrote {cff}")

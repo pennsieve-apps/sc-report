@@ -80,6 +80,10 @@ def write_tables(tables_dir: Path, ctx: dict[str, Any]) -> list[str]:
     save("methods.csv", pd.DataFrame([{"app": r["app"], "step": r["step"], "version": r["version"], "tools": r["tools"],
                                        "parameters": r["parameters"], "citations": ";".join(map(str, r["cites"]))}
                                       for r in ctx["methods"]]))
-    save("citations.csv", pd.DataFrame([{"number": i + 1, "text": r["text"], "doi": r["doi"], "pmid": r.get("pmid", ""),
-                                         "verified_by_report": r["verified"]} for i, r in enumerate(ctx["references"])]))
+    pf = ctx["platform"]
+    save("citations.csv", pd.DataFrame([{"role": "platform", "number": "", "text": pf["record"]["text"], "doi": pf["doi"],
+                                         "pmid": pf["record"].get("pmid", ""), "verified_by_report": True}]
+                                       + [{"role": "method", "number": i + 1, "text": r["text"], "doi": r["doi"],
+                                           "pmid": r.get("pmid", ""), "verified_by_report": r["verified"]}
+                                          for i, r in enumerate(ctx["references"])]))
     return written

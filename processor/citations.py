@@ -32,6 +32,24 @@ STEPS = {
 FALLBACK = {"st-compare": ["10.1093/bioinformatics/btad547", "10.1186/s13059-014-0550-8", "10.1038/s41467-021-25960-2",
                            "10.1038/s41467-021-27150-6", "10.1111/j.2517-6161.1982.tb01195.x",
                            "10.1111/j.2517-6161.1995.tb02031.x", "10.1038/s41592-019-0686-2", "10.21105/joss.04371"]}
+# Printed first in every report's Citations section, word for word (the DOI is made a link, the text is
+# unchanged). The paper is in references.json (verified) but not in CITATION.cff: the app also runs
+# outside Pennsieve.
+PLATFORM_DOI = "10.1038/s41597-025-06075-5"
+PLATFORM_STATEMENT = (
+    "Citing Pennsieve. If you used Pennsieve to store, analyse, share or publish data reported in a publication, "
+    "please cite: Goldblum Z, et al. Pennsieve: A Collaborative Platform for Translational Neuroscience and Beyond. "
+    "Scientific Data 2025;12:1834. doi:10.1038/s41597-025-06075-5. Please also cite the datasets you used (their "
+    "DOIs) and the methods listed below.")
+
+
+def platform() -> dict[str, Any]:
+    """The statement split around its DOI (so the page can link it), and the verified record."""
+    before, after = PLATFORM_STATEMENT.split(f"doi:{PLATFORM_DOI}", 1)
+    return {"statement": PLATFORM_STATEMENT, "before": before, "after": after, "doi": PLATFORM_DOI,
+            "record": table()[PLATFORM_DOI]}
+
+
 OWN_SHORT = [{"doi": "10.1038/s41576-023-00586-w", "pmid": "37002403", "text": "Heumos L et al. Nat Rev Genet 2023"},
              {"doi": "10.1109/MCSE.2007.55", "text": "Hunter JD. Comput Sci Eng 2007"}]
 OWN = [c["doi"] for c in OWN_SHORT]

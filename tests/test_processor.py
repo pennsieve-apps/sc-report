@@ -73,6 +73,17 @@ def test_both_workflows(fixtures, tmp_path, monkeypatch, layout):
     assert cites["10.1093/bioinformatics/btad547"]["verifiedByReport"]      # st-compare (no citations in provenance)
     assert not cites[UNKNOWN_DOI]["verifiedByReport"] and "Doe J" in cites[UNKNOWN_DOI]["text"]
     assert "10.1038/s41576-023-00586-w" in cites                           # the report's own
+    # The platform statement, word for word, first in the Citations section (above the numbered methods).
+    from processor.citations import PLATFORM_STATEMENT
+    cit = html[html.index('id="citations"'):]
+    text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", cit[:cit.index("</div>")]))
+    assert PLATFORM_STATEMENT in text
+    assert cit.index('id="cite-platform"') < cit.index('id="ref1"')
+    assert s["citations"][0]["role"] == "platform" and s["citations"][0]["doi"] == "10.1038/s41597-025-06075-5"
+    ct = pd.read_csv(tmp_path / "tables" / "citations.csv", dtype=str)
+    assert ct.iloc[0]["role"] == "platform" and ct.iloc[0]["doi"] == "10.1038/s41597-025-06075-5"
+    assert "Goldblum Z" in ct.iloc[0]["text"] and (ct["role"].iloc[1:] == "method").all()
+    assert "s41597-025-06075-5" not in (Path(__file__).parent.parent / "CITATION.cff").read_text()
     assert s["inputData"][0]["doi"] == "10.26275/cxuf-ftav" and s["inputData"][0]["n_samples"] == 5
     tables = sorted(p.name for p in (tmp_path / "tables").glob("*.csv"))
     assert tables == ["atac_qc.csv", "citations.csv", "clusters.csv", "composition.csv", "composition_by_condition.csv",

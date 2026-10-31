@@ -135,6 +135,7 @@
 {% endfor %}
 
 <h2 id="citations">Citations</h2>
+<div class="card" id="cite-platform"><p>{{ platform.before }}<a href="https://doi.org/{{ platform.doi }}">doi:{{ platform.doi }}</a>{{ platform.after }}</p></div>
 <p class="small muted">Gathered from every step's provenance.json, deduplicated. Each marked ✓ was checked against Crossref and PubMed (DataCite and Pennsieve Discover for datasets) when this report was built; others are shown as the step gave them.</p>
 <ol class="refs small">{% for c in references %}<li id="ref{{ loop.index }}">{{ c.text }} <a href="https://doi.org/{{ c.doi }}">doi:{{ c.doi }}</a>{% if c.pmid %}, PMID {{ c.pmid }}{% endif %}.{% if c.verified %} ✓{% else %} <span class="muted">(as given by the step)</span>{% endif %}</li>{% endfor %}</ol>
 

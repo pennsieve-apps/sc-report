@@ -55,13 +55,26 @@ shows up without a code change.
 | ATAC QC | `atac` | barcodes before/after and removed per reason (atac-prep's per-sample `qc_summary.csv`; without it, the rows of `atac_qc.csv` with `passed` false, read in chunks), median TSS enrichment and fragments; atac-prep's summary, tables and figures |
 | Gene regulation | `regulome` (one block per `<LABEL>/`) | atac-regulome's summary, tables and figures |
 | Methods | any `provenance.json` | per step: version, tools, parameters, method as run, citation numbers |
-| Citations | always | gathered from every step's `provenance.json` `citations`, deduplicated, numbered in pipeline order, plus the report's own |
+| Citations | always | first the platform statement ("Citing Pennsieve…", below); then the methods gathered from every step's `provenance.json` `citations`, deduplicated, numbered in pipeline order, plus the report's own |
 | Input data | `metadata` | the samples; a data credit (dataset, contributors, licence, Discover id, describing paper) when a demo dataset is recognised from sc-prep's sample paths |
 
 A section whose inputs are present but unreadable is reported at the top of the page and in
 `provenance.json` (`sectionErrors`); the rest is still rendered.
 
 ### Citations
+
+Every report prints this statement first in its Citations section, above the per-step methods,
+word for word (only the DOI is a link):
+
+> Citing Pennsieve. If you used Pennsieve to store, analyse, share or publish data reported in a
+> publication, please cite: Goldblum Z, et al. Pennsieve: A Collaborative Platform for
+> Translational Neuroscience and Beyond. Scientific Data 2025;12:1834.
+> doi:10.1038/s41597-025-06075-5. Please also cite the datasets you used (their DOIs) and the
+> methods listed below.
+
+The paper is in `processor/references.json` (verified like the others), first in
+`tables/citations.csv` with `role` `platform`, and first in `summary.json` `citations`. It is not
+in this app's `CITATION.cff`: the app also runs outside Pennsieve.
 
 A step's `provenance.json` may cite a bare DOI (as `conventions.md` describes) or an object
 `{doi, pmid, text}` (as sc-integrate and sc-markers write). Each DOI is looked up in
@@ -111,7 +124,7 @@ Outputs (two, so each in `OUTPUT_DIR/<name>/`):
 | `markers_top.csv` | `label_set, label, n_cells, n_samples, n_markers, dropped_inconsistent, top markers` |
 | `composition_tests.csv`, `de_summary.csv`, `de_top_genes.csv` | st-compare's rows + `label_set`; significance at the report's `FDR` |
 | `atac_qc.csv` | `sample_id, n_removed` |
-| `methods.csv`, `citations.csv` | per step run: `app, step, version, tools, parameters, citations`; per reference: `number, text, doi, pmid, verified_by_report` |
+| `methods.csv`, `citations.csv` | per step run: `app, step, version, tools, parameters, citations`; per reference: `role` (`platform` first, then `method`), `number` (methods only), `text, doi, pmid, verified_by_report` |
 | `summary.json` | per section: observations, caveats, headline numbers; workflows detected; citations; data credit |
 
 Exit codes: `0` success; `1` none of the inputs found; `2` bad parameter or `INPUT_DIR` not a
@@ -246,8 +259,16 @@ data. Its own dependencies:
 - **Datasets:** DataCite (title, creators, year, licence) and the Discover API (DOI,
   contributors with ORCID, version, licence).
 
-All 59 papers and 3 datasets are in `CITATION.cff` with author lists as Crossref and Discover
-give them, and in `processor/references.json`. The report's own:
+`processor/references.json` holds 60 papers and 3 datasets. All but the platform paper (59 papers
+and 3 datasets) are in `CITATION.cff` with author lists as Crossref and Discover
+give them, and in `processor/references.json`. The platform paper (printed first, not in `CITATION.cff`):
+
+- Goldblum Z, Xu Z, Shi H, et al. (9 authors). Pennsieve: A Collaborative Platform for
+  Translational Neuroscience and Beyond. *Sci Data* 12(1):1834 (2025, issued 2025-11-19).
+  doi:10.1038/s41597-025-06075-5. PMID 41261152 (PubMed: title, first author and year matched on
+  2026-10-31).
+
+The report's own:
 
 - Heumos L, Schaar AC, Lance C, et al. Best practices for single-cell analysis across
   modalities. *Nat Rev Genet* 24(8):550-572 (2023). doi:10.1038/s41576-023-00586-w. PMID 37002403.
