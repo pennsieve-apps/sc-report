@@ -1,0 +1,118 @@
+# yaml-language-server: $schema=https://schemas.pennsieve.io/app-manifest/v1.json
+schemaVersion: "1.0"
+application:
+  name: Single-cell Report
+  description: >-
+    The last step of both single-cell workflows (Single-nucleus Atlas Mapping & Condition
+    Comparison; Multiome Gene Regulation). It reads whatever upstream outputs it is given (sc-prep
+    metadata, sc-qc QC, sc-integrate clusters and UMAP, sc-annotate cell types, sc-markers marker
+    genes, st-compare composition and pseudobulk DE, atac-prep ATAC QC, atac-regulome regulatory
+    results) and writes one self-contained HTML page a biologist can read offline (styles and
+    figures inline, no scripts): samples and metadata, QC per sample (removed and why), clusters,
+    cell types and composition per sample and condition, markers, differential expression per
+    cell type, ATAC QC and gene regulation, methods with every step's version and parameters, the
+    citations gathered from every step's provenance and the data's credits; plus the tables
+    behind it. Every input is optional.
+  type: processor
+  tags:
+    - single-cell
+    - single-nucleus
+    - multiome
+    - transcriptomics
+    - genomics
+    - atac-seq
+    - report
+    - quality-control
+    - clustering
+    - cell-typing
+    - differential-expression
+    - gene-regulation
+    - neuroscience
+    - pain
+    - musculoskeletal
+runtime:
+  cpu: 1024
+  # Reads summary tables and labels.csv (in chunks, three columns), never per-cell matrices; see
+  # README "Runtime" for the measured peak. 2048 is the smallest Fargate size for 1 vCPU.
+  memory: 2048
+  computeTypes:
+    - standard
+    - lambda
+  timeoutSeconds: 600
+parameters:
+  - name: REPORT_TITLE
+    type: string
+    description: Title of the report page.
+    defaultValue: "Single-cell Report"
+  - name: FDR
+    type: number
+    description: >-
+      False discovery rate for what the report counts as significant (st-compare's composition
+      tests and pseudobulk DE), applied to the adjusted p-values the step wrote. Display only.
+    defaultValue: 0.05
+    min: 0
+    max: 1
+  - name: MAX_ITEMS
+    type: integer
+    description: Rows per top-N table (DE genes, table previews).
+    defaultValue: 20
+    min: 1
+  - name: MAX_FIGURES
+    type: integer
+    description: Figures inlined per section (per LABEL for markers, comparisons and regulation); the page says how many more the upstream output holds.
+    defaultValue: 12
+    min: 1
+# Each input in its own folder (placement: subfolder) when linked; without links each upstream
+# folder is recognised by its provenance.json (or its files) anywhere under INPUT_DIR. markers,
+# compare and regulome may each receive several links (one <LABEL>/ folder each).
+inputs:
+  - name: metadata
+    description: sc-prep's metadata output (samples.csv, prep.json, provenance.json; samples_full.csv is never read).
+    mediaTypes: [text/csv, application/json]
+    placement: subfolder
+    required: false
+  - name: qc
+    description: sc-qc's QC output (per-sample table, summary.json, figures, provenance.json).
+    mediaTypes: [text/csv, image/png, application/json]
+    placement: subfolder
+    required: false
+  - name: integration
+    description: sc-integrate's integration output (cluster_summary.csv, metrics.csv, umap_*.png, summary.json, provenance.json).
+    mediaTypes: [text/csv, image/png, application/json]
+    placement: subfolder
+    required: false
+  - name: annotation
+    description: sc-annotate's labels output (labels.csv with cell_type, summary.json, provenance.json); sc-integrate's labels (cluster) also work.
+    mediaTypes: [text/csv, image/png, application/json]
+    placement: subfolder
+    required: false
+  - name: markers
+    description: sc-markers outputs, one <LABEL>/ folder each (markers.csv, dotplot.png, heatmap.png, summary.json, provenance.json).
+    mediaTypes: [text/csv, image/png, application/json]
+    placement: subfolder
+    required: false
+  - name: compare
+    description: st-compare outputs, one <LABEL>/ folder each (composition_tests.csv, de_summary.csv, de.csv, summary.json, figures, provenance.json).
+    mediaTypes: [text/csv, image/png, application/json]
+    placement: subfolder
+    required: false
+  - name: atac
+    description: atac-prep's QC tables (atac_qc.csv, summary.json, figures, provenance.json; .h5ad files are not read).
+    mediaTypes: [text/csv, image/png, application/json]
+    placement: subfolder
+    required: false
+  - name: regulome
+    description: atac-regulome outputs, one <LABEL>/ folder each (tables, summary.json, figures, provenance.json).
+    mediaTypes: [text/csv, image/png, application/json]
+    placement: subfolder
+    required: false
+outputs:
+  - name: report
+    description: index.html (self-contained, offline) and provenance.json.
+    mediaTypes: [text/html, application/json]
+  - name: tables
+    description: >-
+      The tables the page shows, as CSV (samples, qc, clusters, composition,
+      composition_by_condition, markers_top, composition_tests, de_summary, de_top_genes, atac_qc,
+      methods, citations; each only when its section has inputs), summary.json and provenance.json.
+    mediaTypes: [text/csv, application/json]

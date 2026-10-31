@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; padding: 24px 16px 48px; background: #f9f9f7; color: #0b0b0b;
+         font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 15px; line-height: 1.5; }
+  main { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.2rem; margin: 40px 0 10px; padding-top: 8px; border-top: 1px solid #e1e0d9; }
+  h3 { font-size: 1rem; margin: 22px 0 6px; }
+  .sub { color: #52514e; margin: 0 0 14px; }
+  .muted { color: #898781; }
+  nav { font-size: 14px; margin: 10px 0 18px; }
+  nav a { margin-right: 14px; white-space: nowrap; }
+  .card { background: #fcfcfb; border: 1px solid rgba(11,11,11,0.10); border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
+  ul.obs { margin: 6px 0; padding-left: 20px; } ul.obs li { margin: 3px 0; }
+  .caveats { background: #fff7df; border: 1px solid #fab219; border-radius: 6px; padding: 8px 12px; font-size: 14px; margin: 10px 0; }
+  .caveats strong { display: block; margin-bottom: 2px; }
+  .caveats ul { margin: 4px 0; padding-left: 20px; }
+  .error { background: #fbe3e3; border: 1px solid #d03b3b; border-radius: 6px; padding: 8px 12px; font-size: 14px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid #e1e0d9; vertical-align: top; }
+  th { color: #52514e; font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .wrap { overflow-x: auto; }
+  .flag { display: inline-block; padding: 0 7px; border-radius: 10px; font-size: 12px; white-space: nowrap;
+          background: #fbe3e3; color: #7a1f1f; border: 1px solid #d03b3b; }
+  .tag { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 12px; background: #e1e0d9; color: #0b0b0b; }
+  .up { color: #1c5cab; } .down { color: #a33b13; }
+  figure { margin: 14px 0; }
+  figure img { max-width: 100%; height: auto; display: block; background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; }
+  figcaption { color: #52514e; font-size: 13px; margin-top: 4px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; font-size: 14px; }
+  .kv dt { color: #52514e; } .kv dd { margin: 0; }
+  .small { font-size: 12.5px; }
+  details summary { cursor: pointer; color: #1c5cab; }
+  code { font-size: 12.5px; background: #f0efec; padding: 0 3px; border-radius: 3px; word-break: break-word; }
+  a { color: #1c5cab; }
+  ol.refs li { margin: 3px 0; }
+  footer { margin-top: 40px; color: #898781; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+<h1>{{ title }}</h1>
+<p class="sub">
+  {% if workflows %}{{ workflows | join(" · ") }}. {% endif %}
+  {% if study %}{{ study.n_samples }} sample{{ "s" if study.n_samples != 1 }}{% if study.conditions and study.conditions | length > 1 %}, {{ study.condition_column }}: {{ study.conditions.keys() | join(", ") }}{% endif %}. {% endif %}
+  Generated {{ generated_at }}. Research use; observations describe the data and are not clinical findings.
+</p>
+<nav>
+  {% if study %}<a href="#samples">Samples</a>{% endif %}
+  {% if qc %}<a href="#qc">QC</a>{% endif %}
+  {% if integration %}<a href="#clusters">Clusters</a>{% endif %}
+  {% if celltypes %}<a href="#celltypes">Cell types</a>{% endif %}
+  {% if markers %}<a href="#markers">Markers</a>{% endif %}
+  {% if compare %}<a href="#compare">Condition comparison</a>{% endif %}
+  {% if atac %}<a href="#atac">ATAC QC</a>{% endif %}
+  {% if regulome %}<a href="#regulome">Gene regulation</a>{% endif %}
+  <a href="#methods">Methods</a>
+  <a href="#citations">Citations</a>
+  <a href="#data">Input data</a>
+</nav>
+
+{% macro body(sec, key) %}
+{% if sec.observations %}<ul class="obs">{% for o in sec.observations %}<li>{{ o }}</li>{% endfor %}</ul>{% endif %}
+{% if sec.caveats %}<div class="caveats"><strong>Keep in mind</strong><ul>{% for c in sec.caveats %}<li>{{ c }}</li>{% endfor %}</ul></div>{% endif %}
+{% if sec.figures %}<div class="grid">{% for f in sec.figures %}<figure><img src="{{ f.src }}" alt="{{ f.caption }}"><figcaption>{{ f.caption }}</figcaption></figure>{% endfor %}</div>{% endif %}
+{% if omitted.get(key) %}<p class="small muted">{{ omitted.get(key) }} more figure(s) not shown (MAX_FIGURES = {{ params.MAX_FIGURES }}); they are in the upstream output.</p>{% endif %}
+{% for t in sec.tables %}
+<details{% if loop.first and t.n_rows <= 30 %} open{% endif %}><summary>{{ t.name }} ({{ t.n_rows }} row{{ "s" if t.n_rows != 1 }}{% if t.n_rows > t.rows | length %}, first {{ t.rows | length }} shown{% endif %}{% if t.n_cols > t.columns | length %}; {{ t.columns | length }} of {{ t.n_cols }} columns{% endif %})</summary>
+<div class="wrap"><table>
+<tr>{% for c in t.columns %}<th{% if t.numeric[loop.index0] %} class="num"{% endif %}>{{ c }}</th>{% endfor %}</tr>
+{% for r in t.rows %}<tr>{% for v in r %}<td{% if t.numeric[loop.index0] %} class="num"{% endif %}>{{ v }}</td>{% endfor %}</tr>{% endfor %}
+</table></div>{% if t.note %}<p class="small muted">{{ t.note }}</p>{% endif %}</details>
+{% endfor %}
+{% if sec.facts %}<details class="small"><summary>Headline numbers (summary.json)</summary><dl class="kv">{% for k, v in sec.facts %}<dt>{{ k }}</dt><dd>{{ v }}</dd>{% endfor %}</dl></details>{% endif %}
+{% endmacro %}
+
+{% if errors %}
+<div class="error"><strong>Some sections could not be rendered</strong> (their inputs were present but unreadable):
+<ul>{% for e in errors %}<li>{{ e.section }}: {{ e.error }}</li>{% endfor %}</ul></div>
+{% endif %}
+
+{% if study %}<h2 id="samples">Samples and metadata</h2>
+{{ body(study, "study") }}
+{% if study.warnings %}<details class="small"><summary>sc-prep warnings ({{ study.warnings | length }})</summary><ul>{% for w in study.warnings %}<li>{{ w }}</li>{% endfor %}</ul></details>{% endif %}
+{% endif %}
+
+{% if qc %}<h2 id="qc">Quality control</h2>
+{{ body(qc, "qc") }}{% endif %}
+
+{% if integration %}<h2 id="clusters">Integration, clusters and UMAP</h2>
+{{ body(integration, "integration") }}{% endif %}
+
+{% if celltypes %}<h2 id="celltypes">Cell types and composition</h2>
+{{ body(celltypes, "celltypes") }}{% endif %}
+
+{% if markers %}<h2 id="markers">Marker genes</h2>
+{% for r in markers %}<h3>{{ r.label }} <span class="muted small">({{ r.label_column }})</span></h3>
+{{ body(r, r.key) }}{% endfor %}{% endif %}
+
+{% if compare %}<h2 id="compare">Condition comparison: composition and pseudobulk DE</h2>
+{% for r in compare %}<h3>{{ r.label }} <span class="muted small">{{ r.label_column }}{% if r.reference %}; {{ r.condition_column }}: {{ r.levels | join(", ") }}, reference {{ r.reference }}{% endif %}</span></h3>
+{{ body(r, r.key) }}{% endfor %}
+<p class="small muted">Significance at the report's FDR {{ fdr }} on st-compare's adjusted p-values.</p>{% endif %}
+
+{% if atac %}<h2 id="atac">ATAC quality control</h2>
+{{ body(atac, "atac") }}{% endif %}
+
+{% if regulome %}<h2 id="regulome">Gene regulation</h2>
+{% for r in regulome %}<h3>{{ r.label }}</h3>
+{{ body(r, r.key) }}{% endfor %}{% endif %}
+
+<h2 id="methods">Methods</h2>
+<p class="small muted">From the provenance.json files among the inputs: each step's version, tool versions, parameters and method; numbers refer to the Citations.</p>
+{% for g in methods %}
+<div class="card">
+  <h3 style="margin-top:0">{{ g.step or g.app }} <span class="muted small">{{ g.app }} {{ g.version }}</span></h3>
+  <dl class="kv small">
+    {% if g.tools %}<dt>tools</dt><dd>{{ g.tools }}</dd>{% endif %}
+    {% if g.parameters %}<dt>parameters</dt><dd><code>{{ g.parameters }}</code></dd>{% endif %}
+    {% if g.files %}<dt>provenance</dt><dd class="muted">{{ g.files | join(", ") }}</dd>{% endif %}
+  </dl>
+  {% if g.method %}<details class="small"><summary>Method as run</summary><ul>{% for m in g.method %}<li>{{ m }}</li>{% endfor %}</ul></details>{% endif %}
+  {% if g.cites %}<p class="small">Cites {% for n in g.cites %}<a href="#ref{{ n }}">[{{ n }}]</a>{{ " " if not loop.last }}{% endfor %}</p>
+  {% else %}<p class="small muted">No citations on record for this step.</p>{% endif %}
+</div>
+{% endfor %}
+
+<h2 id="citations">Citations</h2>
+<p class="small muted">Gathered from every step's provenance.json, deduplicated. Each marked ✓ was checked against Crossref and PubMed (DataCite and Pennsieve Discover for datasets) when this report was built; others are shown as the step gave them.</p>
+<ol class="refs small">{% for c in references %}<li id="ref{{ loop.index }}">{{ c.text }} <a href="https://doi.org/{{ c.doi }}">doi:{{ c.doi }}</a>{% if c.pmid %}, PMID {{ c.pmid }}{% endif %}.{% if c.verified %} ✓{% else %} <span class="muted">(as given by the step)</span>{% endif %}</li>{% endfor %}</ol>
+
+<h2 id="data">Input data</h2>
+{% for d in credit %}
+<div class="card"><p><strong>Data credit.</strong> {{ d.record.text }} <a href="https://doi.org/{{ d.doi }}">doi:{{ d.doi }}</a>. Licence {{ d.record.license }}; Pennsieve Discover dataset {{ d.record.discover }}. Contributors: {{ d.credit }}. {{ d.n_samples }} of its samples are among the inputs.</p>
+{% if d.paper_record %}<p class="small muted">Described in: {{ d.paper_record.text }} <a href="https://doi.org/{{ d.paper }}">doi:{{ d.paper }}</a>{% if d.paper_record.pmid %}, PMID {{ d.paper_record.pmid }}{% endif %}.</p>{% endif %}</div>
+{% endfor %}
+{% if study %}<p class="small">Samples as sc-prep recorded them: {% for r in study.tables[0].frame.itertuples() %}<code>{{ r.sample_id }}</code>{{ ", " if not loop.last }}{% endfor %}.</p>
+{% else %}<p class="muted">The original input files are not known: no sc-prep metadata among the inputs.</p>{% endif %}
+{% if not credit %}<p class="small muted">No known demo dataset recognised: cite the data you used yourself.</p>{% endif %}
+
+<footer>
+  Generated {{ generated_at }} by sc-report {{ app_version }}. FDR {{ params.FDR }}, MAX_ITEMS {{ params.MAX_ITEMS }}, MAX_FIGURES {{ params.MAX_FIGURES }}.
+  One self-contained file: styles and figures are inline, nothing is loaded from the network.
+</footer>
+</main>
+</body>
+</html>

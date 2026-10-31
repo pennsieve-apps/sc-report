@@ -1,0 +1,232 @@
+{
+ "10.1038/s41576-023-00586-w": {
+  "doi": "10.1038/s41576-023-00586-w",
+  "type": "article",
+  "text": "Heumos L, Schaar AC, Lance C, et al. Best practices for single-cell analysis across modalities. Nature Reviews Genetics 2023;24(8):550-572.",
+  "pmid": "37002403",
+  "year": 2023,
+  "checked": "2026-10-31"
+ },
+ "10.1109/mcse.2007.55": {
+  "doi": "10.1109/MCSE.2007.55",
+  "type": "article",
+  "text": "Hunter JD. Matplotlib: A 2D Graphics Environment. Computing in Science & Engineering 2007;9(3):90-95.",
+  "pmid": "",
+  "year": 2007,
+  "checked": "2026-10-31"
+ },
+ "10.1186/s13059-017-1382-0": {
+  "doi": "10.1186/s13059-017-1382-0",
+  "type": "article",
+  "text": "Wolf FA, Angerer P, Theis FJ. SCANPY: large-scale single-cell gene expression data analysis. Genome Biology 2018;19(1):15.",
+  "pmid": "29409532",
+  "year": 2018,
+  "checked": "2026-10-31"
+ },
+ "10.21105/joss.04371": {
+  "doi": "10.21105/joss.04371",
+  "type": "article",
+  "text": "Virshup I, Rybakov S, Theis FJ, Angerer P, Wolf FA. anndata: Access and store annotated data matrices. Journal of Open Source Software 2024;9(101):4371.",
+  "pmid": "",
+  "year": 2024,
+  "checked": "2026-10-31"
+ },
+ "10.1111/j.2517-6161.1995.tb02031.x": {
+  "doi": "10.1111/j.2517-6161.1995.tb02031.x",
+  "type": "article",
+  "text": "Benjamini Y, Hochberg Y. Controlling the False Discovery Rate: A Practical and Powerful Approach to Multiple Testing. Journal of the Royal Statistical Society Series B: Statistical Methodology 1995;57(1):289-300.",
+  "pmid": "",
+  "year": 1995,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41592-019-0686-2": {
+  "doi": "10.1038/s41592-019-0686-2",
+  "type": "article",
+  "text": "Virtanen P, Gommers R, Oliphant TE, et al. SciPy 1.0: fundamental algorithms for scientific computing in Python. Nature Methods 2020;17(3):261-272.",
+  "pmid": "32015543",
+  "year": 2020,
+  "checked": "2026-10-31"
+ },
+ "10.1016/j.cell.2019.05.031": {
+  "doi": "10.1016/j.cell.2019.05.031",
+  "type": "article",
+  "text": "Stuart T, Butler A, Hoffman P, et al. Comprehensive Integration of Single-Cell Data. Cell 2019;177(7):1888-1902.e21.",
+  "pmid": "31178118",
+  "year": 2019,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41592-019-0619-0": {
+  "doi": "10.1038/s41592-019-0619-0",
+  "type": "article",
+  "text": "Korsunsky I, Millard N, Fan J, et al. Fast, sensitive and accurate integration of single-cell data with Harmony. Nature Methods 2019;16(12):1289-1296.",
+  "pmid": "31740819",
+  "year": 2019,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41592-018-0229-2": {
+  "doi": "10.1038/s41592-018-0229-2",
+  "type": "article",
+  "text": "Lopez R, Regier J, Cole MB, Jordan MI, Yosef N. Deep generative modeling for single-cell transcriptomics. Nature Methods 2018;15(12):1053-1058.",
+  "pmid": "30504886",
+  "year": 2018,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41587-021-01206-w": {
+  "doi": "10.1038/s41587-021-01206-w",
+  "type": "article",
+  "text": "Gayoso A, Lopez R, Xing G, et al. A Python library for probabilistic analysis of single-cell omics data. Nature Biotechnology 2022;40(2):163-166.",
+  "pmid": "35132262",
+  "year": 2022,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41598-019-41695-z": {
+  "doi": "10.1038/s41598-019-41695-z",
+  "type": "article",
+  "text": "Traag VA, Waltman L, van Eck NJ. From Louvain to Leiden: guaranteeing well-connected communities. Scientific Reports 2019;9(1):5233.",
+  "pmid": "30914743",
+  "year": 2019,
+  "checked": "2026-10-31"
+ },
+ "10.21105/joss.00861": {
+  "doi": "10.21105/joss.00861",
+  "type": "article",
+  "text": "McInnes L, Healy J, Saul N, Großberger L. UMAP: Uniform Manifold Approximation and Projection. Journal of Open Source Software 2018;3(29):861.",
+  "pmid": "",
+  "year": 2018,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41592-021-01336-8": {
+  "doi": "10.1038/s41592-021-01336-8",
+  "type": "article",
+  "text": "Luecken MD, Büttner M, Chaichoompu K, et al. Benchmarking atlas-level data integration in single-cell genomics. Nature Methods 2022;19(1):41-50.",
+  "pmid": "34949812",
+  "year": 2022,
+  "checked": "2026-10-31"
+ },
+ "10.1016/0377-0427(87)90125-7": {
+  "doi": "10.1016/0377-0427(87)90125-7",
+  "type": "article",
+  "text": "Rousseeuw PJ. Silhouettes: A graphical aid to the interpretation and validation of cluster analysis. Journal of Computational and Applied Mathematics 1987;20:53-65.",
+  "pmid": "",
+  "year": 1987,
+  "checked": "2026-10-31"
+ },
+ "10.2307/3001968": {
+  "doi": "10.2307/3001968",
+  "type": "article",
+  "text": "Wilcoxon F. Individual Comparisons by Ranking Methods. Biometrics Bulletin 1945;1(6):80.",
+  "pmid": "",
+  "year": 1945,
+  "checked": "2026-10-31"
+ },
+ "10.1214/aoms/1177730491": {
+  "doi": "10.1214/aoms/1177730491",
+  "type": "article",
+  "text": "Mann HB, Whitney DR. On a Test of Whether one of Two Random Variables is Stochastically Larger than the Other. The Annals of Mathematical Statistics 1947;18(1):50-60.",
+  "pmid": "",
+  "year": 1947,
+  "checked": "2026-10-31"
+ },
+ "10.1186/s13059-024-03183-0": {
+  "doi": "10.1186/s13059-024-03183-0",
+  "type": "article",
+  "text": "Pullin JM, McCarthy DJ. A comparison of marker gene selection methods for single-cell RNA sequencing data. Genome Biology 2024;25(1):56.",
+  "pmid": "38409056",
+  "year": 2024,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41467-021-25960-2": {
+  "doi": "10.1038/s41467-021-25960-2",
+  "type": "article",
+  "text": "Squair JW, Gautier M, Kathe C, et al. Confronting false discoveries in single-cell differential expression. Nature Communications 2021;12(1):5692.",
+  "pmid": "34584091",
+  "year": 2021,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41467-021-21038-1": {
+  "doi": "10.1038/s41467-021-21038-1",
+  "type": "article",
+  "text": "Zimmerman KD, Espeland MA, Langefeld CD. A practical solution to pseudoreplication bias in single-cell studies. Nature Communications 2021;12(1):738.",
+  "pmid": "33531494",
+  "year": 2021,
+  "checked": "2026-10-31"
+ },
+ "10.1016/j.cels.2019.07.012": {
+  "doi": "10.1016/j.cels.2019.07.012",
+  "type": "article",
+  "text": "Zhang JM, Kamath GM, Tse DN. Valid Post-clustering Differential Analysis for Single-Cell RNA-Seq. Cell Systems 2019;9(4):383-392.e6.",
+  "pmid": "31521605",
+  "year": 2019,
+  "checked": "2026-10-31"
+ },
+ "10.1186/s13059-014-0550-8": {
+  "doi": "10.1186/s13059-014-0550-8",
+  "type": "article",
+  "text": "Love MI, Huber W, Anders S. Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2. Genome Biology 2014;15(12):550.",
+  "pmid": "25516281",
+  "year": 2014,
+  "checked": "2026-10-31"
+ },
+ "10.1093/bioinformatics/btad547": {
+  "doi": "10.1093/bioinformatics/btad547",
+  "type": "article",
+  "text": "Muzellec B, Teleńczuk M, Cabeli V, Andreux M. PyDESeq2: a python package for bulk RNA-seq differential expression analysis. Bioinformatics 2023;39(9):btad547.",
+  "pmid": "37669147",
+  "year": 2023,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41467-021-27150-6": {
+  "doi": "10.1038/s41467-021-27150-6",
+  "type": "article",
+  "text": "Büttner M, Ostner J, Müller CL, Theis FJ, Schubert B. scCODA is a Bayesian model for compositional single-cell data analysis. Nature Communications 2021;12(1):6876.",
+  "pmid": "34824236",
+  "year": 2021,
+  "checked": "2026-10-31"
+ },
+ "10.1111/j.2517-6161.1982.tb01195.x": {
+  "doi": "10.1111/j.2517-6161.1982.tb01195.x",
+  "type": "article",
+  "text": "Aitchison J. The Statistical Analysis of Compositional Data. Journal of the Royal Statistical Society Series B: Statistical Methodology 1982;44(2):139-160.",
+  "pmid": "",
+  "year": 1982,
+  "checked": "2026-10-31"
+ },
+ "10.1093/brain/awaf370": {
+  "doi": "10.1093/brain/awaf370",
+  "type": "article",
+  "text": "Arendt-Tranholm A, Sankaranarayanan I, Payne C, et al. Transcriptome of the human C2 dorsal root ganglia in C1–2 arthrodesis surgery: insight for neck pain. Brain 2026;149(4):1349-1364.",
+  "pmid": "41032656",
+  "year": 2026,
+  "checked": "2026-10-31"
+ },
+ "10.26275/cxuf-ftav": {
+  "doi": "10.26275/cxuf-ftav",
+  "type": "data",
+  "text": "Arendt-Tranholm A, Sankaranarayanan I, Price TJ. Single nucleus sequencing of human C2 dorsal root ganglia tissue from fusion surgeries. SPARC Portal (2025), version 1.",
+  "pmid": "",
+  "year": 2025,
+  "checked": "2026-10-31",
+  "license": "CC-BY-4.0",
+  "discover": 475
+ },
+ "10.26275/9qsp-i8dh": {
+  "doi": "10.26275/9qsp-i8dh",
+  "type": "data",
+  "text": "Sankaranarayanan I, Price TJ. Single nucleus sequencing atlas of human dorsal root ganglion. SPARC Portal (2025), version 1.",
+  "pmid": "",
+  "year": 2025,
+  "checked": "2026-10-31",
+  "license": "CC-BY-4.0",
+  "discover": 480
+ },
+ "10.26275/oqxx-si9h": {
+  "doi": "10.26275/oqxx-si9h",
+  "type": "data",
+  "text": "Yang L, Gereau R. A single-cell multi-omic atlas of human sympathetic ganglia. SPARC Portal (2025), version 1.",
+  "pmid": "",
+  "year": 2025,
+  "checked": "2026-10-31",
+  "license": "CC-BY-4.0",
+  "discover": 465
+ }
+}
