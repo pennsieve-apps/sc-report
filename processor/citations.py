@@ -32,12 +32,19 @@ STEPS = {
 FALLBACK = {"st-compare": ["10.1093/bioinformatics/btad547", "10.1186/s13059-014-0550-8", "10.1038/s41467-021-25960-2",
                            "10.1038/s41467-021-27150-6", "10.1111/j.2517-6161.1982.tb01195.x",
                            "10.1111/j.2517-6161.1995.tb02031.x", "10.1038/s41592-019-0686-2", "10.21105/joss.04371"]}
-OWN = ["10.1038/s41576-023-00586-w", "10.1109/MCSE.2007.55"]
+OWN_SHORT = [{"doi": "10.1038/s41576-023-00586-w", "pmid": "37002403", "text": "Heumos L et al. Nat Rev Genet 2023"},
+             {"doi": "10.1109/MCSE.2007.55", "text": "Hunter JD. Comput Sci Eng 2007"}]
+OWN = [c["doi"] for c in OWN_SHORT]
 
-# Demo datasets, recognised by the sample paths sc-prep recorded.
+# Demo datasets, recognised by the sample paths and ids sc-prep recorded (the layouts of the Discover
+# datasets: drg-c2 sub-*/sam-*-DRG?/count, the DRG atlas sub-*/sam-*/sam-*-<level>/count, the sympathetic
+# ganglia multiome sam-hSG-lib-<n>). Contributors as the Discover API lists them.
 DATASETS = [
-    {"doi": "10.26275/cxuf-ftav", "match": re.compile(r"sub-UTD-CC\d+"), "paper": "10.1093/brain/awaf370",
-     "credit": "Arendt-Tranholm A, Sankaranarayanan I, Price TJ"},
+    {"doi": "10.26275/cxuf-ftav", "match": re.compile(r"sub-UTD-CC\d+/sam-UTD-CC\d+-DRG[LR]/"),
+     "paper": "10.1093/brain/awaf370", "credit": "Arendt-Tranholm A, Sankaranarayanan I, Price TJ"},
+    {"doi": "10.26275/9qsp-i8dh", "match": re.compile(r"sub-UTD-[A-Z]{2}\d+/sam-UTD-[A-Z]{2}\d+/sam-UTD-[A-Z]{2}\d+-"),
+     "paper": None, "credit": "Sankaranarayanan I, Price TJ"},
+    {"doi": "10.26275/oqxx-si9h", "match": re.compile(r"sam-hSG-lib-\d+"), "paper": None, "credit": "Yang L, Gereau R"},
 ]
 
 
@@ -85,10 +92,11 @@ def gather(provenances: list[tuple[Path, dict[str, Any]]]) -> tuple[list[dict[st
     return refs, numbers
 
 
-def datasets(paths: list[str]) -> list[dict[str, Any]]:
+def datasets(samples: list[tuple[str, str]]) -> list[dict[str, Any]]:
+    """samples: (sample_id, source path) pairs."""
     out = []
     for ds in DATASETS:
-        n = sum(1 for p in paths if ds["match"].search(p))
+        n = sum(1 for sid, path in samples if ds["match"].search(f"{path}/") or ds["match"].search(sid))
         if n:
-            out.append({**ds, "n_samples": n, "record": table()[ds["doi"]], "paper_record": table().get(ds["paper"])})
+            out.append({**ds, "n_samples": n, "record": table()[ds["doi"]], "paper_record": table().get(ds["paper"]) if ds["paper"] else None})
     return out

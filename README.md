@@ -52,7 +52,7 @@ shows up without a code change.
 | Cell types and composition | `annotation` (labels.csv) | types and shares, types below 1%, low-confidence calls (`cell_type_score` < 0.5), types in one sample only; composition per sample (the report's own stacked-bar figure) and mean share per condition, with the largest differences between two conditions (descriptive) |
 | Marker genes | `markers` (one block per `<LABEL>/`) | per label: cells, samples, markers, hits dropped as inconsistent, top five; dot plot and heatmap; the p-value caveat |
 | Condition comparison | `compare` (one block per `<LABEL>/`) | composition tests (at the report's `FDR`, and when nothing is significant, the smallest p the rank test can reach); pseudobulk DE results, top genes and labels not tested; st-compare's figures |
-| ATAC QC | `atac` | cells removed by ATAC QC (per reason and sample, from `atac_qc.csv`), atac-prep's summary, tables and figures |
+| ATAC QC | `atac` | barcodes before/after and removed per reason (atac-prep's per-sample `qc_summary.csv`; without it, the rows of `atac_qc.csv` with `passed` false, read in chunks), median TSS enrichment and fragments; atac-prep's summary, tables and figures |
 | Gene regulation | `regulome` (one block per `<LABEL>/`) | atac-regulome's summary, tables and figures |
 | Methods | any `provenance.json` | per step: version, tools, parameters, method as run, citation numbers |
 | Citations | always | gathered from every step's `provenance.json` `citations`, deduplicated, numbered in pipeline order, plus the report's own |
@@ -77,13 +77,22 @@ does not hold is shown with the step's own text, marked "as given by the step". 
 Inputs, all `placement: subfolder` and none required: `metadata`, `qc`, `integration`,
 `annotation`, `markers`, `compare`, `atac`, `regulome` (see `sample-input/README.md` for which
 upstream output goes where). `markers`, `compare` and `regulome` may each receive several links,
-one `<LABEL>/` folder each. Symlinks are followed only to where the platform's own entries point;
-a deeper link that resolves outside `INPUT_DIR` is skipped and listed in `provenance.json`.
-Untrusted content is handled as data:
+one `<LABEL>/` folder each.
 
-- every value is HTML-escaped by Jinja2's autoescape;
-- a figure is inlined only if it starts with the PNG signature and is at most 8 MB;
-- JSON files over 20 MB and CSV files over 2 GB are not read.
+Every input path comes from the shared `processor/safe_inputs.py` (vendored unchanged from
+`workflow-single-cell/shared/`): `InputDir.walk()` follows symlinks only to where the platform's
+own links point (the entries of `INPUT_DIR` and of a real port folder, one hop: a link that an
+upstream app wrote into its own output is not trusted), and a folder's files are the walked files
+in it, never a fresh glob or path join. Untrusted content is handled as data:
+
+- every file is read through the capped readers: JSON up to 20 MB, whole CSVs up to 256 MB;
+  `labels.csv`, st-compare's `de.csv` and atac-prep's `atac_qc.csv` are read in chunks of a few
+  columns from the checked file;
+- per-cell tables (any CSV with an `obs_id` column, e.g. sc-qc's `<sample_id>_qc.csv`) are never
+  shown;
+- every value is HTML-escaped by Jinja2's autoescape, and the page carries a Content Security
+  Policy (`default-src 'none'; img-src data:; style-src 'unsafe-inline'`);
+- a figure is inlined only through `InputDir.inline_png`: a PNG signature, at most 8 MB.
 
 Outputs (two, so each in `OUTPUT_DIR/<name>/`):
 
@@ -105,7 +114,10 @@ Outputs (two, so each in `OUTPUT_DIR/<name>/`):
 | `methods.csv`, `citations.csv` | per step run: `app, step, version, tools, parameters, citations`; per reference: `number, text, doi, pmid, verified_by_report` |
 | `summary.json` | per section: observations, caveats, headline numbers; workflows detected; citations; data credit |
 
-Exit codes: `0` success; `1` none of the inputs found; `2` bad parameter.
+Exit codes: `0` success; `1` none of the inputs found; `2` bad parameter or `INPUT_DIR` not a
+folder. `provenance.json` has the conventions' keys (`app`, `version`, `tools`, `parameters`,
+`inputs`, `started`, `finished`, `samples`, `peak_rss_mb`, `cgroup_peak_mb`, `threads`,
+`citations`) plus the folders found per port, sections, section errors and omitted figures.
 
 ## Parameters
 
@@ -118,17 +130,29 @@ Exit codes: `0` success; `1` none of the inputs found; `2` bad parameter.
 
 ## Results on the demo data
 
-Run on what existed of drg-c2 when this was written (Discover 475): sc-prep's `metadata`
-output, plus an sc-markers run on sc-prep's cells with stand-in k-means clusters (see
-sc-markers' README). sc-qc, sc-integrate and sc-annotate outputs did not exist yet, so the QC,
-cluster, cell-type and comparison sections were exercised on the synthetic fixture only.
+drg-c2 (Discover 475), the whole of workflow A as it stood on 2026-10-31 18:48 UTC: sc-prep
+`metadata`, sc-qc `qc`, sc-integrate `integration`, sc-annotate `labels` and `annotation`,
+sc-markers (`cell-type` and `cluster`), st-compare (`cell-type`, `condition`: acute vs chronic).
+Each port was a real folder of symlinks into the upstream outputs, as the platform links them.
+Output in the workflow repository under `data/work/drg-c2/report/{report,tables}/`. The page
+(9.1 MB, 34 figures inlined) says:
 
 - **Samples:** 12 samples, 20,415 nuclei (186–3,000 per sample; sc-prep capped at 3,000),
-  18,082–18,099 genes, human, Cell Ranger Flex. Conditions from `subject_experimental_group`:
-  acute (7) and chronic (5). sc-prep ignored one input entry.
-- **Data credit** recognised for all 12 samples: Arendt-Tranholm A, Sankaranarayanan I, Price TJ,
-  doi:10.26275/cxuf-ftav, CC BY 4.0, described in *Brain* 2026 (doi:10.1093/brain/awaf370).
-- **Markers:** 8 labels, 50 markers each, with dot plot and heatmap inlined (the page is 413 KB).
+  human, Flex; acute (7) vs chronic (5) neck pain (sc-prep copied `subject_experimental_group` to
+  `condition`, so no confounding caveat is raised for that copy).
+- **QC:** 1,977 of 20,415 nuclei removed (9.7%; 4.6% to 16% per sample), mostly high
+  mitochondrial fraction (1,252) and high top-20-gene share (593); ambient removal skipped (no
+  GPU).
+- **Clusters:** 15 clusters over 18,438 nuclei, Harmony.
+- **Cell types:** 10 types; Unassigned 35%, Fibroblast 20%, Satellite glia 14%, Neuron 11%;
+  median cell-type score 0.22 (markers mode). Largest difference in mean share: Nociceptor (NP
+  MRGPRD-type) 5.9% in acute vs 3.3% in chronic (descriptive).
+- **Comparison:** no cell type's share differs at FDR 0.05 (with 7 vs 5 samples the rank test
+  cannot go below p = 0.0025 before correction); pseudobulk DE finds 12 significant gene × cell
+  type results over 10 tested types.
+- **Markers:** 500 (cell types) and 750 (clusters), with 6,777 and 12,871 pooled hits dropped as
+  inconsistent across samples.
+- **Citations:** 29, all rendered from the verified table; data credit for all 12 samples.
 
 ## Runtime
 
@@ -139,8 +163,8 @@ M-series Mac**:
 
 | Inputs | Sections | Peak RSS | cgroup peak | Wall time (incl. container start) |
 |---|---|---|---|---|
-| drg-c2: sc-prep metadata + sc-markers (12 samples, 8 labels) | 2 | 107 MB | 118 MB | 3 s |
-| Synthetic fixture, both workflows (labels.csv of 11,820 cells) | 8 | 111 MB (local) | | < 1 s (local) |
+| drg-c2, workflow A (12 samples; labels.csv of 18,438 nuclei; 2 markers runs, 1 st-compare run) | 6 | 207 MB | 199 MB | 2 s |
+| Synthetic fixture, both workflows (labels.csv of 11,820 cells) | 8 | 201 MB (local) | | < 1 s (local) |
 
 Memory does not grow with the number of cells beyond one 500,000-row chunk of three
 `labels.csv` columns. Image: 540 MB (`python:3.12.16-slim-bookworm` + pandas, matplotlib,
@@ -162,7 +186,11 @@ findings: a sample losing 45% to QC, a cluster in one sample only, neurons 5% �
 conditions, a significant composition test, a DOI the reference table does not hold, and
 st-compare's provenance without citations. The tests also cover:
 
-- the flat layout (upstream folders with uninformative names);
+- the flat layout (upstream folders with uninformative names) and the platform's real link layout
+  (port folders whose entries are symlinks into sibling upstream outputs);
+- links an upstream app wrote into its own output pointing outside it (a `summary.json` and a
+  figure next to a run folder): never read, never inlined;
+- the ATAC contract (`passed` false only), and the CSP meta tag;
 - broken inputs: invalid JSON, a non-PNG `.png`, and HTML/script in a metadata value (escaped,
   never executed);
 - a symlink escaping `INPUT_DIR`;
@@ -179,10 +207,10 @@ st-compare's provenance without citations. The tests also cover:
   being built at the same time as this app. Their sections show summary numbers, status, tables
   and figures, with dedicated sentences only where the contract fixes the format (QC counts are
   read from `n_<cells|obs|nuclei>_before/after` and `n_removed_<reason>` columns).
-- **Demo-dataset credit** is recognised from sc-prep's sample paths, and only for drg-c2 today
-  (`sub-UTD-CC…`). drg-atlas (Discover 480) and the sympathetic multiome (Discover 465) are
-  verified in `references.json`, but their sample paths are not matched yet. Other data get no
-  credit line: cite your data yourself.
+- **Demo-dataset credit** is recognised from sc-prep's sample paths and ids: drg-c2 (Discover
+  475, `sub-UTD-CC…/sam-…-DRG?/`), the DRG atlas (480, `sub-…/sam-…/sam-…-<level>/`) and the
+  sympathetic ganglia multiome (465, `sam-hSG-lib-<n>`). Other data get no credit line: cite your
+  data yourself.
 - Static PNG figures, light theme, English only.
 - **Shared template with st-report.** The two reports share the page's CSS, the
   methods/citations machinery and `verify_citations.py`. A shared package would be simpler once
@@ -192,7 +220,7 @@ st-compare's provenance without citations. The tests also cover:
 ## Licences
 
 Our code: Apache-2.0 (`LICENSE`). Bundled components and their licences: `THIRD_PARTY.md` (all
-permissive; no GPL code in the image).
+permissive; no GPL Python packages, while the Debian base layer contains GPL system tools).
 
 ## Credits
 
@@ -205,7 +233,7 @@ data. Its own dependencies:
   the tables and the page.
 - Demo data: **Arendt-Tranholm A, Sankaranarayanan I and Price TJ** shared the drg-c2 single-nucleus data (Discover 475, CC BY 4.0).
 - **Sankaranarayanan I and Price TJ** shared the DRG atlas (Discover 480, CC BY 4.0).
-- **Yang L and Gereau RW** shared the sympathetic ganglia
+- **Yang L and Gereau R** shared the sympathetic ganglia
   multiome atlas (Discover 465, CC BY 4.0).
 
 ## Citations
@@ -218,13 +246,21 @@ data. Its own dependencies:
 - **Datasets:** DataCite (title, creators, year, licence) and the Discover API (DOI,
   contributors with ORCID, version, licence).
 
-All 26 papers and 3 datasets are in `CITATION.cff` with author lists as Crossref and Discover
+All 59 papers and 3 datasets are in `CITATION.cff` with author lists as Crossref and Discover
 give them, and in `processor/references.json`. The report's own:
 
 - Heumos L, Schaar AC, Lance C, et al. Best practices for single-cell analysis across
   modalities. *Nat Rev Genet* 24(8):550-572 (2023). doi:10.1038/s41576-023-00586-w. PMID 37002403.
 - Hunter JD. Matplotlib: A 2D Graphics Environment. *Comput Sci Eng* 9(3):90-95 (2007).
   doi:10.1109/MCSE.2007.55. (Crossref; not in PubMed)
+
+The table also holds every DOI the other single-cell apps cite in their `CITATION.cff` or
+`provenance.json` (sc-prep, sc-qc, sc-integrate, sc-annotate, atac-prep, atac-regulome: e.g.
+Scrublet, CellBender, pipeComp, scANVI, CellTypist, SnapATAC2, ArchR, MACS, GENCODE 2023, JASPAR
+2026, NumPy, scikit-image, the arXiv records of scikit-learn and PyTorch) and fastp 1.0 (Chen S,
+*iMeta* 4(5):e70078, 2025, doi:10.1002/imt2.70078, PMID 41112039), so they render verified.
+Pyro (Bingham et al., JMLR 2019) has no DOI; the report lists works by DOI only, so a citation
+without one (Pyro, if a step cited it so) is not shown.
 
 Per step (shown when that step's provenance is among the inputs):
 

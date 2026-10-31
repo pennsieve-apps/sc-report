@@ -199,6 +199,278 @@
   "year": 2026,
   "checked": "2026-10-31"
  },
+ "10.1002/imt2.70078": {
+  "doi": "10.1002/imt2.70078",
+  "type": "article",
+  "text": "Chen S. fastp 1.0: An ultra‐fast all‐round tool for FASTQ data quality control and preprocessing. iMeta 2025;4(5):e70078.",
+  "pmid": "41112039",
+  "year": 2025,
+  "checked": "2026-10-31"
+ },
+ "10.1016/j.cels.2018.11.005": {
+  "doi": "10.1016/j.cels.2018.11.005",
+  "type": "article",
+  "text": "Wolock SL, Lopez R, Klein AM. Scrublet: Computational Identification of Cell Doublets in Single-Cell Transcriptomic Data. Cell Systems 2019;8(4):281-291.e9.",
+  "pmid": "30954476",
+  "year": 2019,
+  "checked": "2026-10-31"
+ },
+ "10.1038/nbt.3192": {
+  "doi": "10.1038/nbt.3192",
+  "type": "article",
+  "text": "Satija R, Farrell JA, Gennert D, Schier AF, Regev A. Spatial reconstruction of single-cell gene expression data. Nature Biotechnology 2015;33(5):495-502.",
+  "pmid": "25867923",
+  "year": 2015,
+  "checked": "2026-10-31"
+ },
+ "10.1038/ncomms14049": {
+  "doi": "10.1038/ncomms14049",
+  "type": "article",
+  "text": "Zheng GXY, Terry JM, Belgrader P, et al. Massively parallel digital transcriptional profiling of single cells. Nature Communications 2017;8(1):14049.",
+  "pmid": "28091601",
+  "year": 2017,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41586-020-2649-2": {
+  "doi": "10.1038/s41586-020-2649-2",
+  "type": "article",
+  "text": "Harris CR, Millman KJ, van der Walt SJ, et al. Array programming with NumPy. Nature 2020;585(7825):357-362.",
+  "pmid": "32939066",
+  "year": 2020,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41586-022-04518-2": {
+  "doi": "10.1038/s41586-022-04518-2",
+  "type": "article",
+  "text": "Emont MP, Jacobs C, Essene AL, et al. A single-cell atlas of human and mouse white adipose tissue. Nature 2022;603(7903):926-933.",
+  "pmid": "35296864",
+  "year": 2022,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41587-021-01001-7": {
+  "doi": "10.1038/s41587-021-01001-7",
+  "type": "article",
+  "text": "Lotfollahi M, Naghipourfar M, Luecken MD, et al. Mapping single-cell data to reference atlases by transfer learning. Nature Biotechnology 2022;40(1):121-130.",
+  "pmid": "34462589",
+  "year": 2022,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41587-021-01139-4": {
+  "doi": "10.1038/s41587-021-01139-4",
+  "type": "article",
+  "text": "Kleshchevnikov V, Shmatko A, Dann E, et al. Cell2location maps fine-grained cell types in spatial transcriptomics. Nature Biotechnology 2022;40(5):661-671.",
+  "pmid": "35027729",
+  "year": 2022,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41587-023-01767-y": {
+  "doi": "10.1038/s41587-023-01767-y",
+  "type": "article",
+  "text": "Hao Y, Stuart T, Kowalski MH, et al. Dictionary learning for integrative, multimodal and scalable single-cell analysis. Nature Biotechnology 2024;42(2):293-304.",
+  "pmid": "37231261",
+  "year": 2024,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41588-018-0081-4": {
+  "doi": "10.1038/s41588-018-0081-4",
+  "type": "article",
+  "text": "Finucane HK, Reshef YA, Anttila V, et al. Heritability enrichment of specifically expressed genes identifies disease-relevant tissues and cell types. Nature Genetics 2018;50(4):621-629.",
+  "pmid": "29632380",
+  "year": 2018,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41588-021-00790-6": {
+  "doi": "10.1038/s41588-021-00790-6",
+  "type": "article",
+  "text": "Granja JM, Corces MR, Pierce SE, et al. ArchR is a scalable software package for integrative single-cell chromatin accessibility analysis. Nature Genetics 2021;53(3):403-411.",
+  "pmid": "33633365",
+  "year": 2021,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41590-019-0378-1": {
+  "doi": "10.1038/s41590-019-0378-1",
+  "type": "article",
+  "text": "Accelerating Medicines Partnership Rheumatoid Arthritis and Systemic Lupus Erythematosus (AMP RA/SLE) Consortium, Zhang F, Wei K, et al. Defining inflammatory cell states in rheumatoid arthritis joint synovial tissues by integrating single-cell transcriptomics and mass cytometry. Nature Immunology 2019;20(7):928-942.",
+  "pmid": "31061532",
+  "year": 2019,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41592-023-01943-7": {
+  "doi": "10.1038/s41592-023-01943-7",
+  "type": "article",
+  "text": "Fleming SJ, Chaffin MD, Arduini A, et al. Unsupervised removal of systematic background noise from droplet-based single-cell experiments using CellBender. Nature Methods 2023;20(9):1323-1335.",
+  "pmid": "37550580",
+  "year": 2023,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41592-023-02139-9": {
+  "doi": "10.1038/s41592-023-02139-9",
+  "type": "article",
+  "text": "Zhang K, Zemke NR, Armand EJ, Ren B. A fast, scalable and versatile tool for analysis of single-cell omics data. Nature Methods 2024;21(2):217-227.",
+  "pmid": "38191932",
+  "year": 2024,
+  "checked": "2026-10-31"
+ },
+ "10.1038/s41598-020-67730-y": {
+  "doi": "10.1038/s41598-020-67730-y",
+  "type": "article",
+  "text": "Chou CH, Jain V, Gibson J, et al. Synovial cell cross-talk with cartilage plays a major role in the pathogenesis of osteoarthritis. Scientific Reports 2020;10(1):10868.",
+  "pmid": "32616761",
+  "year": 2020,
+  "checked": "2026-10-31"
+ },
+ "10.1093/database/baz046": {
+  "doi": "10.1093/database/baz046",
+  "type": "article",
+  "text": "Franzén O, Gan LM, Björkegren JLM. PanglaoDB: a web server for exploration of mouse and human single-cell RNA sequencing data. Database 2019;2019.",
+  "pmid": "30951143",
+  "year": 2019,
+  "checked": "2026-10-31"
+ },
+ "10.1093/nar/gkac1071": {
+  "doi": "10.1093/nar/gkac1071",
+  "type": "article",
+  "text": "Frankish A, Carbonell-Sala S, Diekhans M, et al. GENCODE: reference annotation for the human and mouse genomes in 2023. Nucleic Acids Research 2023;51(D1):D942-D949.",
+  "pmid": "36420896",
+  "year": 2023,
+  "checked": "2026-10-31"
+ },
+ "10.1093/nar/gkaf1209": {
+  "doi": "10.1093/nar/gkaf1209",
+  "type": "article",
+  "text": "Ovek Baydar D, Rauluseviciute I, Aronsen DR, et al. JASPAR 2026: expansion of transcription factor binding profiles and integration of deep learning models. Nucleic Acids Research 2026;54(D1):D184-D193.",
+  "pmid": "41325984",
+  "year": 2026,
+  "checked": "2026-10-31"
+ },
+ "10.1097/j.pain.0000000000002628": {
+  "doi": "10.1097/j.pain.0000000000002628",
+  "type": "article",
+  "text": "Avraham O, Chamessian A, Feng R, et al. Profiling the molecular signature of satellite glial cells at the single cell level reveals high similarities between rodents and humans. Pain 2022;163(12):2348-2364.",
+  "pmid": "35503034",
+  "year": 2022,
+  "checked": "2026-10-31"
+ },
+ "10.1101/2021.02.10.430563": {
+  "doi": "10.1101/2021.02.10.430563",
+  "type": "article",
+  "text": "Bandrowski A, Grethe JS, Pilko A, et al. SPARC Data Structure: Rationale and Design of a FAIR Standard for Biomedical Research Data. bioRxiv 2021.",
+  "pmid": "",
+  "year": 2021,
+  "checked": "2026-10-31"
+ },
+ "10.1101/2025.09.18.677119": {
+  "doi": "10.1101/2025.09.18.677119",
+  "type": "article",
+  "text": "Yang L, Dourson AJ, Tao R, et al. A multi-omic atlas of human autonomic and sensory ganglia implicates cell types in peripheral neuropathies. bioRxiv 2025.",
+  "pmid": "41000833",
+  "year": 2025,
+  "checked": "2026-10-31"
+ },
+ "10.1126/sciadv.adj9173": {
+  "doi": "10.1126/sciadv.adj9173",
+  "type": "article",
+  "text": "Bhuiyan SA, Xu M, Yang L, et al. Harmonized cross-species cell atlases of trigeminal and dorsal root ganglia. Science Advances 2024;10(25):eadj9173.",
+  "pmid": "38905344",
+  "year": 2024,
+  "checked": "2026-10-31"
+ },
+ "10.1126/science.aad0501": {
+  "doi": "10.1126/science.aad0501",
+  "type": "article",
+  "text": "Tirosh I, Izar B, Prakadan SM, et al. Dissecting the multicellular ecosystem of metastatic melanoma by single-cell RNA-seq. Science 2016;352(6282):189-196.",
+  "pmid": "27124452",
+  "year": 2016,
+  "checked": "2026-10-31"
+ },
+ "10.1126/science.abl5197": {
+  "doi": "10.1126/science.abl5197",
+  "type": "article",
+  "text": "Domínguez Conde C, Xu C, Jarvis LB, et al. Cross-tissue immune cell analysis reveals tissue-specific features in humans. Science 2022;376(6594):eabl5197.",
+  "pmid": "35549406",
+  "year": 2022,
+  "checked": "2026-10-31"
+ },
+ "10.1126/scitranslmed.abj8186": {
+  "doi": "10.1126/scitranslmed.abj8186",
+  "type": "article",
+  "text": "Tavares-Ferreira D, Shiers S, Ray PR, et al. Spatial transcriptomics of dorsal root ganglia identifies molecular signatures of human nociceptors. Science Translational Medicine 2022;14(632):eabj8186.",
+  "pmid": "35171654",
+  "year": 2022,
+  "checked": "2026-10-31"
+ },
+ "10.1136/annrheumdis-2017-212863": {
+  "doi": "10.1136/annrheumdis-2017-212863",
+  "type": "article",
+  "text": "Ji Q, Zheng Y, Zhang G, et al. Single-cell RNA-seq analysis reveals the progression of human osteoarthritis. Annals of the Rheumatic Diseases 2019;78(1):100-110.",
+  "pmid": "30026257",
+  "year": 2019,
+  "checked": "2026-10-31"
+ },
+ "10.1186/gb-2008-9-9-r137": {
+  "doi": "10.1186/gb-2008-9-9-r137",
+  "type": "article",
+  "text": "Zhang Y, Liu T, Meyer CA, et al. Model-based Analysis of ChIP-Seq (MACS). Genome Biology 2008;9(9):R137.",
+  "pmid": "18798982",
+  "year": 2008,
+  "checked": "2026-10-31"
+ },
+ "10.1186/s13059-020-02136-7": {
+  "doi": "10.1186/s13059-020-02136-7",
+  "type": "article",
+  "text": "Germain PL, Sonrel A, Robinson MD. pipeComp, a general framework for the evaluation of computational pipelines, reveals performant single cell RNA-seq preprocessing tools. Genome Biology 2020;21(1):227.",
+  "pmid": "32873325",
+  "year": 2020,
+  "checked": "2026-10-31"
+ },
+ "10.15252/msb.20209620": {
+  "doi": "10.15252/msb.20209620",
+  "type": "article",
+  "text": "Xu C, Lopez R, Mehlman E, Regier J, Jordan MI, Yosef N. Probabilistic harmonization and annotation of single‐cell transcriptomics data with deep generative models. Molecular Systems Biology 2021;17(1):MSB20209620.",
+  "pmid": "33491336",
+  "year": 2021,
+  "checked": "2026-10-31"
+ },
+ "10.21105/joss.07540": {
+  "doi": "10.21105/joss.07540",
+  "type": "article",
+  "text": "Ramos-Carreño C, Rossi T. rdata: A Python library for R datasets. Journal of Open Source Software 2024;9(104):7540.",
+  "pmid": "",
+  "year": 2024,
+  "checked": "2026-10-31"
+ },
+ "10.25080/majora-92bf1922-00a": {
+  "doi": "10.25080/majora-92bf1922-00a",
+  "type": "article",
+  "text": "McKinney W. Data Structures for Statistical Computing in Python. Proceedings of the Python in Science Conference 2010;:56-61.",
+  "pmid": "",
+  "year": 2010,
+  "checked": "2026-10-31"
+ },
+ "10.48550/arxiv.1201.0490": {
+  "doi": "10.48550/arxiv.1201.0490",
+  "type": "article",
+  "text": "Pedregosa F, Varoquaux G, Gramfort A, et al. Scikit-learn: Machine Learning in Python. arXiv 2012.",
+  "pmid": "",
+  "year": 2012,
+  "checked": "2026-10-31"
+ },
+ "10.48550/arxiv.1912.01703": {
+  "doi": "10.48550/arxiv.1912.01703",
+  "type": "article",
+  "text": "Paszke A, Gross S, Massa F, et al. PyTorch: An Imperative Style, High-Performance Deep Learning Library. arXiv 2019.",
+  "pmid": "",
+  "year": 2019,
+  "checked": "2026-10-31"
+ },
+ "10.7717/peerj.453": {
+  "doi": "10.7717/peerj.453",
+  "type": "article",
+  "text": "van der Walt S, Schönberger JL, Nunez-Iglesias J, et al. scikit-image: image processing in Python. PeerJ 2014;2:e453.",
+  "pmid": "25024921",
+  "year": 2014,
+  "checked": "2026-10-31"
+ },
  "10.26275/cxuf-ftav": {
   "doi": "10.26275/cxuf-ftav",
   "type": "data",

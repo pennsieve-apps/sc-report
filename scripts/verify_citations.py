@@ -62,6 +62,41 @@ PAPERS = {
     "aitchison": "10.1111/j.2517-6161.1982.tb01195.x",
     # demo data
     "drg_c2_paper": "10.1093/brain/awaf370",
+    # cited by the other single-cell apps (their CITATION.cff and provenance.json), so they render verified
+    "fastp_1": "10.1002/imt2.70078",
+    "scrublet": "10.1016/j.cels.2018.11.005",
+    "seurat_2015": "10.1038/nbt.3192",
+    "cellranger_2017": "10.1038/ncomms14049",
+    "numpy": "10.1038/s41586-020-2649-2",
+    "adipose_atlas": "10.1038/s41586-022-04518-2",
+    "scarches": "10.1038/s41587-021-01001-7",
+    "cell2location": "10.1038/s41587-021-01139-4",
+    "seurat_v5": "10.1038/s41587-023-01767-y",
+    "ldsc_seg": "10.1038/s41588-018-0081-4",
+    "archr": "10.1038/s41588-021-00790-6",
+    "synovium_ra": "10.1038/s41590-019-0378-1",
+    "cellbender": "10.1038/s41592-023-01943-7",
+    "snapatac2": "10.1038/s41592-023-02139-9",
+    "synovium_oa_cartilage": "10.1038/s41598-020-67730-y",
+    "panglaodb": "10.1093/database/baz046",
+    "gencode_2023": "10.1093/nar/gkac1071",
+    "jaspar_2026": "10.1093/nar/gkaf1209",
+    "sgc_pain_2022": "10.1097/j.pain.0000000000002628",
+    "sparc_sds": "10.1101/2021.02.10.430563",
+    "ganglia_multiome_preprint": "10.1101/2025.09.18.677119",
+    "trigeminal_drg_atlas": "10.1126/sciadv.adj9173",
+    "melanoma_2016": "10.1126/science.aad0501",
+    "celltypist": "10.1126/science.abl5197",
+    "drg_spatial_2022": "10.1126/scitranslmed.abj8186",
+    "oa_chondrocytes": "10.1136/annrheumdis-2017-212863",
+    "macs": "10.1186/gb-2008-9-9-r137",
+    "pipecomp": "10.1186/s13059-020-02136-7",
+    "scanvi": "10.15252/msb.20209620",
+    "rdata": "10.21105/joss.07540",
+    "pandas_2010": "10.25080/majora-92bf1922-00a",
+    "sklearn_arxiv": "10.48550/arxiv.1201.0490",
+    "pytorch_arxiv": "10.48550/arxiv.1912.01703",
+    "scikit_image": "10.7717/peerj.453",
 }
 # Demo data: DOI -> Discover dataset id.
 DATASETS = {"10.26275/cxuf-ftav": 475, "10.26275/9qsp-i8dh": 480, "10.26275/oqxx-si9h": 465}
@@ -88,6 +123,19 @@ def norm(text: str) -> str:
     return re.sub(r"[^a-z0-9]", "", text)
 
 
+def paper(doi: str) -> dict:
+    """Crossref; DataCite for DOIs Crossref does not register (arXiv)."""
+    if doi.lower().startswith("10.48550/"):
+        a = get("https://api.datacite.org/dois/" + urllib.parse.quote(doi))["data"]["attributes"]
+        authors = [{"family": c["familyName"], "given": c.get("givenName", "")} if c.get("familyName")
+                   else {"name": c.get("name")} for c in a.get("creators", [])]
+        pub = a.get("publisher")
+        return {"doi": doi, "type": "article", "title": plain(a["titles"][0]["title"]), "authors": authors,
+                "journal": "arXiv" if "arxiv" in doi.lower() else (pub if isinstance(pub, str) else (pub or {}).get("name", "")),
+                "year": a.get("publicationYear"), "volume": "", "issue": "", "pages": "", "source": "datacite"}
+    return crossref(doi)
+
+
 def crossref(doi: str) -> dict:
     m = get("https://api.crossref.org/works/" + urllib.parse.quote(doi))["message"]
     authors = []
@@ -102,8 +150,10 @@ def crossref(doi: str) -> dict:
         if dp and dp[0] and dp[0][0]:
             year = dp[0][0]
             break
+    journal = plain((m.get("container-title") or [""])[0]) or plain(((m.get("institution") or [{}])[0]).get("name", "")) \
+        or plain(m.get("publisher", ""))
     return {"doi": doi, "type": "article", "title": plain((m.get("title") or [""])[0]), "authors": authors,
-            "journal": plain((m.get("container-title") or [""])[0]), "year": year, "volume": m.get("volume", ""),
+            "journal": journal, "year": year, "volume": m.get("volume", ""),
             "issue": m.get("issue", ""), "pages": m.get("page") or m.get("article-number") or ""}
 
 
@@ -124,10 +174,13 @@ def pubmed(ref: dict) -> str:
     title_ok = norm(s.get("title", ""))[:60] == norm(ref["title"])[:60]
     years = {str(ref["year"]), str(ref["year"] - 1)}
     year_ok = any(y in s.get("pubdate", "") + s.get("epubdate", "") for y in years)
-    first = ref["authors"][0]
+    # First personal author: Crossref may list a consortium first; PubMed writes "Family Initials".
+    first = next((a for a in ref["authors"] if a.get("family")), ref["authors"][0])
     first_name = first.get("family") or first.get("name") or ""
-    pm_first = (s.get("authors") or [{}])[0].get("name", "")
-    author_ok = norm(first_name)[:6] == norm(pm_first.split(" ")[0])[:6]
+    pm_names = [a.get("name", "") for a in (s.get("authors") or [])]
+    pm_families = [n.rsplit(" ", 1)[0] if " " in n else n for n in pm_names[:3]]
+    pm_first = pm_names[0] if pm_names else ""
+    author_ok = any(norm(first_name) == norm(f) for f in pm_families)
     n_ok = len(s.get("authors") or []) == len(ref["authors"])
     if not (title_ok and year_ok and author_ok):
         print(f"  PubMed {ids[0]} does not match {ref['doi']}: title {title_ok}, year {year_ok}, first author "
@@ -197,8 +250,8 @@ def cff_refs(refs: list[dict]) -> str:
 def verify() -> list[dict]:
     refs = []
     for key, doi in PAPERS.items():
-        r = crossref(doi)
-        r["pmid"] = pubmed(r)
+        r = paper(doi)
+        r["pmid"] = pubmed(r) if r.get("source") != "datacite" else ""
         refs.append(r)
         print(f"{key:14} {r['year']} {len(r['authors']):3} authors  PMID {r['pmid'] or '-':9} {r['journal'][:28]:28} "
               f"{r['volume']}({r['issue']}):{r['pages']}  {r['title'][:60]}")

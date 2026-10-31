@@ -141,10 +141,19 @@ def build(root: Path, workflow: str, seed: int = 3) -> dict[str, dict]:
                              "n_samples_per_level": {"control": 2, "pain": 3}},
             "provenance.json": prov("st-compare", None)}
     if "b" in workflow:
-        ports["atac"] = {"atac_qc.csv": pd.DataFrame({"sample_id": ["s1"] * 30 + ["s3"] * 50,
-                                                      "obs_id": [f"x{i}" for i in range(80)],
-                                                      "reason": ["low tsse"] * 60 + ["few fragments"] * 20}),
-                         "summary.json": {"n_cells": 9000, "median_tsse": 8.2, "genome": "GRCh38"},
+        n_bc = {"s1": 300, "s3": 400}
+        bc = pd.concat([pd.DataFrame({"sample_id": sid, "obs_id": [f"{sid}:BC{i:06d}-1" for i in range(n)],
+                                      "n_fragment": rng.integers(500, 20000, n), "frac_dup": 0.2, "frac_mito": 0.01,
+                                      "tsse": rng.uniform(2, 15, n).round(2)}) for sid, n in n_bc.items()],
+                       ignore_index=True)
+        bc["passed"] = (bc["tsse"] >= 5) & (bc["n_fragment"] >= 1000)
+        bc["reason"] = np.where(bc["tsse"] < 5, "low_tsse", np.where(bc["n_fragment"] < 1000, "few_fragments", ""))
+        per = bc.groupby("sample_id").agg(n_cells_before=("passed", "size"), n_cells_after=("passed", "sum"),
+                                          median_tsse=("tsse", "median"), median_fragments=("n_fragment", "median"))
+        per["n_removed_low_tsse"] = bc[bc["reason"] == "low_tsse"].groupby("sample_id").size()
+        per["n_removed_few_fragments"] = bc[bc["reason"] == "few_fragments"].groupby("sample_id").size()
+        ports["atac"] = {"atac_qc.csv": bc, "qc_summary.csv": per.fillna(0).reset_index(),
+                         "summary.json": {"n_cells": int(bc["passed"].sum()), "genome": "GRCh38"},
                          "provenance.json": prov("atac-prep", ["10.1038/s41592-023-02139-9"])}
         ports["regulome/cell-type"] = {
             "peaks_per_type.csv": pd.DataFrame({"cell_type": TYPES, "n_peaks": [5000, 7000, 6000, 3000]}),
@@ -154,9 +163,25 @@ def build(root: Path, workflow: str, seed: int = 3) -> dict[str, dict]:
 
 
 def make_fixture(root: Path, layout: str = "both", workflow: str = "ab") -> dict[str, Path]:
+    """Layouts: linked (one folder per port), flat (upstream-<i>/ folders), platform (the real link layout:
+    upstream/<port>/ outputs, and platform/<port>/ real folders whose entries are symlinks into them)."""
     root = Path(root)
     ports = build(root, workflow)
     out = {}
+    if layout in ("both", "platform"):
+        up, link = root / "upstream", root / "platform"
+        for d in (up, link):
+            if d.exists():
+                shutil.rmtree(d)
+        for port, files in ports.items():
+            write(up / port, files)
+        for port in {p.split("/")[0] for p in ports}:
+            (link / port).mkdir(parents=True)
+            for e in sorted((up / port).iterdir()):
+                (link / port / e.name).symlink_to(Path("..", "..", "upstream", port, e.name))
+        out["platform"] = link
+        if layout == "platform":
+            return out
     for name in (["linked", "flat"] if layout == "both" else [layout]):
         base = root / name
         if base.exists():
@@ -172,7 +197,7 @@ def make_fixture(root: Path, layout: str = "both", workflow: str = "ab") -> dict
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("out", type=Path)
-    ap.add_argument("--layout", choices=["linked", "flat", "both"], default="both")
+    ap.add_argument("--layout", choices=["linked", "flat", "platform", "both"], default="both")
     ap.add_argument("--workflow", default="ab")
     args = ap.parse_args(argv)
     for name, path in make_fixture(args.out, args.layout, args.workflow).items():

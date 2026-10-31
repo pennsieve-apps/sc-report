@@ -12,41 +12,33 @@ import pandas as pd
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 TEMPLATES = Path(__file__).parent / "templates"
-PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
-MAX_PNG_BYTES = 8 * 1024 ** 2
-
-
-def inline_png(path: Path) -> str | None:
-    """A PNG file as a data: URI; None when it is not a PNG or too large (upstream files are untrusted)."""
-    try:
-        if path.stat().st_size > MAX_PNG_BYTES:
-            return None
-        data = path.read_bytes()
-    except OSError:
-        return None
-    if not data.startswith(PNG_MAGIC):
-        return None
-    return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
 
 
 class Figures:
-    """Inlines at most `limit` figures per section; counts the rest."""
+    """Inlines at most `limit` figures per section; counts the rest. Upstream figures go through
+    InputDir.inline_png (walk rule, size cap, PNG signature); the report's own figure (`own`) is a file it
+    wrote itself under /tmp."""
 
-    def __init__(self, limit: int):
+    def __init__(self, limit: int, inp):
         self.limit = limit
+        self.inp = inp
         self.omitted: dict[str, int] = {}
         self.n = 0
+
+    def _uri(self, f: dict[str, Any]) -> str | None:
+        if f.get("own"):
+            return "data:image/png;base64," + base64.b64encode(Path(f["path"]).read_bytes()).decode("ascii")
+        return self.inp.inline_png(Path(f["path"]))
 
     def take(self, key: str, figs: list[dict[str, Any]]) -> list[dict[str, str]]:
         out = []
         for f in figs:
-            uri = inline_png(Path(f["path"]))
-            if uri is None:
-                continue
             if len(out) >= self.limit:
                 self.omitted[key] = self.omitted.get(key, 0) + 1
                 continue
-            out.append({"src": uri, "caption": f["caption"]})
+            uri = self._uri(f)
+            if uri is not None:
+                out.append({"src": uri, "caption": f["caption"]})
         self.n += len(out)
         return out
 
@@ -84,7 +76,7 @@ def write_tables(tables_dir: Path, ctx: dict[str, Any]) -> list[str]:
         frames = [r[key].assign(label_set=r["label"]) for r in ctx.get("compare") or [] if r.get(key) is not None]
         save(name, pd.concat(frames) if frames else None)
     if at:
-        save("atac_qc.csv", next((t["frame"] for t in at["tables"] if t["name"].startswith("cells removed")), None))
+        save("atac_qc.csv", next((t["frame"] for t in at["tables"] if t["name"] in ("qc", "barcodes removed by ATAC QC, per sample")), None))
     save("methods.csv", pd.DataFrame([{"app": r["app"], "step": r["step"], "version": r["version"], "tools": r["tools"],
                                        "parameters": r["parameters"], "citations": ";".join(map(str, r["cites"]))}
                                       for r in ctx["methods"]]))

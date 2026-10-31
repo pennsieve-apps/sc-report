@@ -40,7 +40,7 @@ def page(out: Path) -> str:
     return (out / "report" / "index.html").read_text()
 
 
-@pytest.mark.parametrize("layout", ["linked", "flat"])
+@pytest.mark.parametrize("layout", ["linked", "flat", "platform"])
 def test_both_workflows(fixtures, tmp_path, monkeypatch, layout):
     assert run(fixtures["ab"][layout], tmp_path, monkeypatch) == 0
     html = page(tmp_path)
@@ -49,6 +49,7 @@ def test_both_workflows(fixtures, tmp_path, monkeypatch, layout):
         assert f'id="{anchor}"' in html, anchor
     # Self-contained: no scripts, nothing loaded from elsewhere; links to doi.org are plain anchors.
     assert "<script" not in html.lower()
+    assert "default-src 'none'; img-src data:; style-src 'unsafe-inline'" in html
     assert not re.search(r'(src|href)="(?!data:image/png;base64,|#|https://doi\.org/)', html)
     assert html.count('src="data:image/png;base64,') >= 8
     s = json.loads((tmp_path / "tables" / "summary.json").read_text())
@@ -59,7 +60,11 @@ def test_both_workflows(fixtures, tmp_path, monkeypatch, layout):
     assert any("C05" in o for o in s["clusters"]["observations"])
     assert any("Neuron 5.4% in control vs 15% in pain" in o for o in s["cellTypes"]["observations"])
     assert any("Neuron (adj. p 0.01)" in o for o in s["comparison"][0]["observations"])
-    assert any("80 cells" in o for o in s["atac"]["observations"])
+    atac = " ".join(s["atac"]["observations"])
+    up = fixtures["ab"]["linked"] / "atac"
+    bc = pd.read_csv(up / "atac_qc.csv")
+    assert f"kept {int(bc['passed'].sum()):,} of {len(bc):,} barcodes" in atac       # passed == false only
+    assert "low tsse" in atac
     assert s["regulome"][0]["observations"] == ["atac-regulome: one label had too few cells"]
     # Citations: gathered from every provenance, deduplicated, st-compare's from the fallback list.
     cites = {c["doi"]: c for c in s["citations"]}
@@ -128,7 +133,28 @@ def test_symlink_escaping_input_is_skipped(fixtures, tmp_path, monkeypatch):
     os.symlink(outside, inp / "metadata" / "deep" / "link")
     assert run(inp, tmp_path / "out", monkeypatch) == 0
     prov = json.loads((tmp_path / "out" / "report" / "provenance.json").read_text())
-    assert prov["inputs"]["markers"] == [] and prov["inputs"]["skipped"]
+    assert prov["folders"]["markers"] == []
+
+
+def test_upstream_links_are_not_trusted(fixtures, tmp_path, monkeypatch):
+    """A port that is a link to an upstream output: links inside that output (written by the upstream app)
+    must not reach files outside it, even next to a folder the report reads (summary.json, figures)."""
+    secret = tmp_path / "secret"
+    secret.mkdir()
+    (secret / "summary.json").write_text(json.dumps({"label": "cell-type", "notes": ["SECRET-NOTE"]}))
+    (secret / "x.png").write_bytes((fixtures["ab"]["linked"] / "markers" / "cell-type" / "dotplot.png").read_bytes())
+    upstream = tmp_path / "upstream" / "markers"
+    shutil.copytree(fixtures["ab"]["linked"] / "markers", upstream)
+    (upstream / "cell-type" / "summary.json").unlink()
+    os.symlink(secret / "summary.json", upstream / "cell-type" / "summary.json")
+    os.symlink(secret / "x.png", upstream / "cell-type" / "volcano_secret.png")
+    inp = tmp_path / "in"
+    inp.mkdir()
+    os.symlink(upstream, inp / "markers")                       # the platform's link: trusted, one hop
+    assert run(inp, tmp_path / "out", monkeypatch) == 0
+    html = page(tmp_path / "out")
+    assert "SECRET-NOTE" not in html and "volcano secret" not in html
+    assert 'id="markers"' in html
 
 
 def test_nothing_found_and_bad_parameters(fixtures, tmp_path, monkeypatch):

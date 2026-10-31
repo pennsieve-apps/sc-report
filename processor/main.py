@@ -141,7 +141,7 @@ def main() -> int:
     input_dir, output_dir = Path(input_dir), Path(output_dir)
     if not input_dir.is_dir():
         log.error("INPUT_DIR %s is not a folder", input_dir)
-        return 1
+        return 2
     os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
     fdr, max_items = params["FDR"], params["MAX_ITEMS"]
 
@@ -162,7 +162,7 @@ def main() -> int:
     for d in (report_dir, tables_dir):
         d.mkdir(parents=True, exist_ok=True)
     errors: list[dict[str, str]] = []
-    figs = R.Figures(params["MAX_FIGURES"])
+    figs = R.Figures(params["MAX_FIGURES"], inp)
 
     st = _section("samples", A.study, errors, inp, max_items)
     qc = _section("qc", A.qc, errors, inp, max_items)
@@ -176,7 +176,7 @@ def main() -> int:
         own = _section("composition figure", F.composition_bars, errors, ct["composition"], A.condition_of(inp),
                        f"{ct['label_column'].replace('_', ' ')} composition per sample", Path(tempfile.gettempdir()) / "sc_report_composition.png")
         if own:
-            ct["figures"].insert(0, {"path": own, "caption": "Composition per sample (condition in brackets); the "
+            ct["figures"].insert(0, {"path": own, "own": True, "caption": "Composition per sample (condition in brackets); the "
                                                              "largest types coloured, the rest as 'other'"})
     for key, sec in (("study", st), ("qc", qc), ("integration", ig), ("celltypes", ct), ("atac", at)):
         if sec:
@@ -191,9 +191,13 @@ def main() -> int:
                                      "labels.csv; significance re-thresholded at FDR from upstream adjusted p-values"}}
     references, numbers = C.gather(inp.provenances)
     meth = methods(inp, numbers, own_prov)
-    paths = [str(p) for p in (inp.samples["path"] if inp.samples is not None and "path" in inp.samples else [])]
-    paths += [str(s.get("source", "")) for s in ((inp.prep or {}).get("samples") or {}).values() if isinstance(s, dict)]
-    credit = C.datasets(paths)
+    pairs: list[tuple[str, str]] = []
+    if inp.samples is not None:
+        pairs += [(str(r.sample_id), str(getattr(r, "path", ""))) for r in inp.samples.itertuples()]
+    pairs += [(str(k), str((v.get("files") or {}).get("matrix") or v.get("source") or ""))
+              for k, v in ((inp.prep or {}).get("samples") or {}).items() if isinstance(v, dict)
+              and str(k) not in {p[0] for p in pairs}]
+    credit = C.datasets(pairs)
     apps = {r["app"] for r in meth}
     workflows = [WORKFLOWS[k] for k, hit in (("A", bool(apps & {"sc-qc", "sc-integrate", "sc-annotate", "sc-markers",
                                                                  "st-compare"}) or ct), ("B", bool(at or rg))) if hit]
@@ -220,17 +224,21 @@ def main() -> int:
     written.append("summary.json")
     sections = {"samples": st, "qc": qc, "clusters": ig, "cell_types": ct, "markers": mk, "comparison": cp, "atac": at,
                 "regulome": rg}
-    provenance = {**own_prov, "citations": [{"doi": r["doi"], "pmid": r.get("pmid") or None, "text": r["text"]}
-                                            for r in references if r["doi"] in C.OWN],
+    sample_ids = [str(x) for x in inp.samples["sample_id"]] if inp.samples is not None else []
+    provenance = {**own_prov,
+                  "inputs": sorted({inp.rel(p) for r in (x for port in I.PORTS for x in inp.many(port))
+                                    for p in r.files.values() if not p.name.endswith(".h5ad")}
+                                   | {inp.rel(p) for p, _ in inp.provenances}
+                                   | ({inp.rel(inp.labels_csv)} if inp.labels_csv else set())),
                   "started": generated, "finished": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                  "timings_seconds": {"total": round(time.monotonic() - t_start, 2)}, "peak_rss_mb": peak_rss_mb(),
-                  "cgroup_memory_peak_mb": cgroup_peak_mb(),
+                  "samples": [{"sample_id": s, "status": "reported"} for s in sample_ids],
+                  "peak_rss_mb": peak_rss_mb(), "cgroup_peak_mb": cgroup_peak_mb(), "threads": 1,
+                  "citations": C.OWN_SHORT,
+                  "folders": {port: [inp.rel(r.dir) or "." for r in inp.many(port)] for port in I.PORTS},
+                  "timings_seconds": {"total": round(time.monotonic() - t_start, 2)},
                   "runtime": "lambda" if os.environ.get("AWS_LAMBDA_FUNCTION_NAME") else "container",
-                  "inputs": {port: [inp.rel(r.dir) or "." for r in inp.many(port)] for port in I.PORTS}
-                  | {"labels_csv": inp.rel(inp.labels_csv), "provenance_files": [inp.rel(p) for p, _ in inp.provenances],
-                     "skipped": {inp.rel(p): "resolves outside INPUT_DIR" for p in inp.rejected}},
                   "workflows": workflows, "sections": {k: bool(v) for k, v in sections.items()},
-                  "sectionErrors": errors, "figuresOmitted": figs.omitted,
+                  "section_errors": errors, "figures_omitted": figs.omitted,
                   "outputs": {"report": ["index.html", "provenance.json"], "tables": written + ["provenance.json"]}}
     for d in (report_dir, tables_dir):
         (d / "provenance.json").write_text(json.dumps(A.clean(provenance), indent=2, ensure_ascii=False) + "\n")

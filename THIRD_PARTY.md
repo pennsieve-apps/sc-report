@@ -24,8 +24,10 @@ Our code (`processor/`, `tests/`, `scripts/`) is Apache-2.0 (`LICENSE`). The Doc
 | awslambdaric | 4.2.3 | Apache-2.0 |
 | simplejson (awslambdaric dependency) | 4.2.0 | MIT or AFL-2.1 |
 | snapshot-restore-py (awslambdaric dependency) | 1.0.0 | Apache-2.0 |
+| pip | 25.0.1 | MIT |
 
-No GPL code is in the image: the report never imports scanpy, scvi-tools, igraph, leidenalg or
+No GPL Python packages are in the image (the Debian base layer contains GPL system tools, e.g.
+bash and coreutils): the report never imports scanpy, scvi-tools, igraph, leidenalg or
 snapatac2; it reads the tables, labels.csv and figures the upstream apps wrote. The PNG figures it inlines
 from upstream outputs are data, under the licence of the dataset they show.
 

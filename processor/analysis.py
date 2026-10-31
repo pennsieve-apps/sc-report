@@ -18,11 +18,12 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from processor.inputs import Inputs, Run, read_csv
+from processor.inputs import Inputs, Run
 
 LABELS_CHUNK = 500_000
 MAX_TABLE_COLS = 14
 PER_CELL_TABLES = ("labels.csv", "atac_qc.csv", "markers.csv", "de.csv")   # never shown as raw tables
+DE_CHUNK = 200_000
 
 
 # ---------------------------------------------------------------- formatting
@@ -145,7 +146,10 @@ def generic(run: Run, sec: dict[str, Any], max_items: int, skip_tables: tuple[st
     for p in run.csvs():
         if p.name in PER_CELL_TABLES + skip_tables:
             continue
-        sec["tables"].append(table(p.name, read_csv(p), max_items))
+        df = run.inp.read_csv(p)
+        if df is not None and "obs_id" in df.columns:      # a per-cell table (e.g. sc-qc's <sample>_qc.csv)
+            continue
+        sec["tables"].append(table(p.name, df, max_items))
     st = sample_status(run)
     if st is not None and not any(t and t["name"] == "qc" for t in sec["tables"]):
         sec["tables"].append(table(f"{run.app}: per-sample status (provenance.json)", st, 200))
@@ -220,7 +224,7 @@ def study(inp: Inputs, max_items: int) -> dict[str, Any] | None:
             out["caveats"].append(f"'{counts.idxmin()}' has {plural(int(counts.min()), 'sample')}: comparisons between "
                                   "conditions use the sample (donor) as the replicate, so only large, consistent "
                                   "differences can be detected.")
-        copied_from = (inp.prep or {}).get("conditionFrom")   # sc-prep copied this column to `condition`
+        copied_from = (inp.prep or {}).get("condition_from") or (inp.prep or {}).get("conditionFrom")  # copied to `condition`
         extra = [c for c in s.columns if c not in ("sample_id", "path", "source", "n_obs", "n_genes", "organism", cond,
                                                    copied_from)]
         for c in extra:
@@ -258,8 +262,8 @@ def qc(inp: Inputs, max_items: int) -> dict[str, Any] | None:
     if run is None:
         return None
     out = section()
-    used, per_sample = next(((p.name, d) for p in run.csvs() if p.name not in PER_CELL_TABLES
-                             and (d := read_csv(p, "sample_id")) is not None and len(d) < 100_000), ("", None))
+    per_sample = run.csv("qc_summary.csv", "sample_id")
+    used = "qc_summary.csv"
     if per_sample is None:
         per_sample = sample_status(run)
     if per_sample is not None:
@@ -282,6 +286,7 @@ def qc(inp: Inputs, max_items: int) -> dict[str, Any] | None:
                                            f"{pct(1 - float(r[a]) / float(r[b]))} against a median of {pct(med)}.")
         reasons = {m.group(2).replace("_", " "): int(pd.to_numeric(per_sample[c], errors="coerce").fillna(0).sum())
                    for c in per_sample.columns if (m := REMOVED.match(c))}
+        reasons = {k: v for k, v in sorted(reasons.items(), key=lambda kv: -kv[1]) if v}
         if reasons:
             out["by_reason"] = reasons
             out["observations"].append("Removed by reason: " + joined([f"{k} {count(v)}" for k, v in reasons.items()])
@@ -327,44 +332,52 @@ def integration(inp: Inputs, max_items: int) -> dict[str, Any] | None:
 
 # ---------------------------------------------------------------- cell types and composition
 
-def read_labels(path: Path) -> tuple[pd.DataFrame, str, dict[str, Any]]:
+def read_labels(inp: Inputs, path: Path) -> tuple[pd.DataFrame, str, dict[str, Any]]:
     """Counts per sample x label from labels.csv (read in chunks; three columns)."""
-    header = read_csv(path, nrows=0).columns
+    header = inp.read_csv(path, nrows=0).columns
     col = "cell_type" if "cell_type" in header else "cluster"
     use = ["sample_id", col] + (["cell_type_score"] if "cell_type_score" in header and col == "cell_type" else [])
     counts: pd.Series | None = None
-    n_low, n = 0, 0
-    for chunk in pd.read_csv(path, usecols=use, dtype={"sample_id": str, col: str}, chunksize=LABELS_CHUNK):
+    scores: list = []
+    n = 0
+    for chunk in inp.csv_chunks(path, usecols=use, dtype={"sample_id": str, col: str}, chunksize=LABELS_CHUNK):
         chunk[col] = chunk[col].fillna("(none)")
         c = chunk.groupby(["sample_id", col]).size()
         counts = c if counts is None else counts.add(c, fill_value=0)
         n += len(chunk)
         if "cell_type_score" in chunk:
-            n_low += int((pd.to_numeric(chunk["cell_type_score"], errors="coerce") < 0.5).sum())
+            scores.append(pd.to_numeric(chunk["cell_type_score"], errors="coerce").dropna().to_numpy(np.float32))
     table_ = counts.unstack(fill_value=0).astype(int) if counts is not None else pd.DataFrame()
-    return table_, col, {"n": n, "n_low_score": n_low, "has_score": "cell_type_score" in use}
+    median = float(np.median(np.concatenate(scores))) if scores and sum(len(x) for x in scores) else None
+    return table_, col, {"n": n, "median_score": median}
 
 
 def celltypes(inp: Inputs, max_items: int) -> dict[str, Any] | None:
-    run = inp.one("annotation")
-    if inp.labels_csv is None and run is None:
+    runs = inp.many("annotation")
+    if inp.labels_csv is None and not runs:
         return None
     out = section()
     if inp.labels_csv is not None:
-        counts, col, info = read_labels(inp.labels_csv)
+        counts, col, info = read_labels(inp, inp.labels_csv)
         out["label_column"] = col
         frac = counts.div(counts.sum(axis=1), axis=0)
         out["composition"] = frac
         totals = counts.sum().sort_values(ascending=False)
         out["observations"].append(f"{plural(len(totals), col.replace('_', ' '))} over {count(info['n'])} cells; largest: "
                                    + joined([f"{k} {pct(v / totals.sum())}" for k, v in totals.head(5).items()]) + ".")
+        if "Unassigned" in totals:
+            out["observations"].append(f"{pct(totals['Unassigned'] / totals.sum())} of cells are Unassigned: no "
+                                       "reference or marker set called them confidently. Their share is part of every "
+                                       "composition below.")
         rare = totals[totals / totals.sum() < 0.01]
         if len(rare):
             out["observations"].append(f"Below 1% of cells: {joined(rare.index.tolist()[:10])}"
                                        + (" …" if len(rare) > 10 else "") + ".")
-        if info["has_score"] and info["n"]:
-            out["observations"].append(f"{pct(info['n_low_score'] / info['n'])} of cells have a cell-type confidence "
-                                       "below 0.5.")
+        if info["median_score"] is not None:
+            mode = next(((r.summary or {}).get("mode") for r in runs if (r.summary or {}).get("mode")), None)
+            out["observations"].append(f"Median cell-type score {info['median_score']:.2f} (sc-annotate's "
+                                       "cell_type_score, 0–1" + (f", {mode} mode" if mode else "") + "; its scale "
+                                       "depends on the mode, so compare it between runs of the same mode only).")
         one = [k for k in counts.columns if (counts[k] >= 20).sum() == 1 and counts.shape[0] > 2]
         if one:
             out["observations"].append(f"With >= 20 cells in one sample only: {joined(one[:10])}.")
@@ -387,7 +400,7 @@ def celltypes(inp: Inputs, max_items: int) -> dict[str, Any] | None:
         long["condition"] = long["sample_id"].map(cond) if cond else None
         out["composition_long"] = long
         out["tables"].append(table(f"cells per sample and {col}", counts.reset_index(), 500))
-    if run is not None:
+    for run in runs:
         generic(run, out, max_items)
     out["caveats"].append("Shares are of the cells that passed QC: dissociation and nuclei isolation do not sample every "
                           "cell type equally (large neurons, adipocytes), so a share is not a tissue proportion. Tests of "
@@ -483,11 +496,9 @@ def compare_one(run: Run, fdr: float, max_items: int) -> dict[str, Any] | None:
             out["observations"].append("Composition: nothing could be tested (each level needs at least two samples).")
     if ds is not None:
         tested = ds[ds["status"] == "tested"]
-        de = run.csv("de.csv", "label", "gene", "p_adj")
         n_sig = int(pd.to_numeric(tested.get("n_significant"), errors="coerce").fillna(0).sum()) if len(tested) else 0
-        if de is not None:
-            de["p_adj"] = pd.to_numeric(de["p_adj"], errors="coerce")
-            hits = de[de["p_adj"] < fdr].sort_values("p_adj")
+        hits = significant_de(run, fdr)
+        if hits is not None:
             n_sig = len(hits)
             out["top_genes"] = hits[[c for c in ("label", "comparison", "gene", "log2_fold_change", "base_mean", "p_adj")
                                      if c in hits]].head(max_items)
@@ -515,6 +526,22 @@ def compare_one(run: Run, fdr: float, max_items: int) -> dict[str, Any] | None:
     return out
 
 
+def significant_de(run: Run, fdr: float) -> pd.DataFrame | None:
+    """The rows of st-compare's de.csv with p_adj < fdr, read in chunks of six columns (de.csv is genes x labels)."""
+    path = run.file("de.csv")
+    if path is None:
+        return None
+    header = run.inp.read_csv(path, nrows=0)
+    if header is None or not {"label", "gene", "p_adj"} <= set(header.columns):
+        return None
+    use = [c for c in ("label", "comparison", "gene", "log2_fold_change", "base_mean", "p_adj") if c in header.columns]
+    parts = []
+    for chunk in run.inp.csv_chunks(path, usecols=use, dtype={"label": str, "gene": str}, chunksize=DE_CHUNK):
+        chunk["p_adj"] = pd.to_numeric(chunk["p_adj"], errors="coerce")
+        parts.append(chunk[chunk["p_adj"] < fdr])
+    return pd.concat(parts).sort_values("p_adj") if parts else header
+
+
 def compare(inp: Inputs, fdr: float, max_items: int) -> list[dict[str, Any]] | None:
     runs = [r for r in (compare_one(run, fdr, max_items) for run in inp.many("compare")) if r]
     return runs or None
@@ -523,19 +550,47 @@ def compare(inp: Inputs, fdr: float, max_items: int) -> list[dict[str, Any]] | N
 # ---------------------------------------------------------------- ATAC
 
 def atac(inp: Inputs, max_items: int) -> dict[str, Any] | None:
+    """atac-prep: qc_summary.csv (one row per sample) and atac_qc.csv (every barcode, `passed`, `reason`)."""
     run = inp.one("atac")
     if run is None:
         return None
     out = section()
-    failed = run.csv("atac_qc.csv", "sample_id")
-    if failed is not None:
-        reason = next((c for c in ("reason", "failed", "fail_reason") if c in failed), None)
-        out["observations"].append(f"ATAC QC removed {count(len(failed))} cells"
-                                   + (": " + joined([f"{k} {count(v)}" for k, v in failed[reason].astype(str)
-                                                     .value_counts().head(6).items()]) if reason else "") + ".")
-        out["tables"].append(table("cells removed by ATAC QC, per sample", failed.groupby("sample_id").size()
-                                   .rename("n_removed").reset_index(), 500))
-    generic(run, out, max_items)
+    per_sample = run.csv("qc_summary.csv", "sample_id")
+    if per_sample is not None and {"n_cells_before", "n_cells_after"} <= set(per_sample.columns):
+        before = pd.to_numeric(per_sample["n_cells_before"], errors="coerce").sum()
+        after = pd.to_numeric(per_sample["n_cells_after"], errors="coerce").sum()
+        out["observations"].append(f"ATAC QC kept {count(after)} of {count(before)} barcodes "
+                                   f"({pct(after / before if before else 0)}).")
+        reasons = {m.group(2).replace("_", " "): int(pd.to_numeric(per_sample[c], errors="coerce").fillna(0).sum())
+                   for c in per_sample.columns if (m := REMOVED.match(c))}
+        reasons = {k: v for k, v in sorted(reasons.items(), key=lambda kv: -kv[1]) if v}
+        if reasons:
+            out["observations"].append("Removed by reason: " + joined([f"{k} {count(v)}" for k, v in reasons.items()])
+                                       + ".")
+        for c, what in (("median_tsse", "TSS enrichment"), ("median_fragments", "fragments per nucleus")):
+            if c in per_sample:
+                v = pd.to_numeric(per_sample[c], errors="coerce")
+                out["observations"].append(f"Median {what} per sample: {v.min():.3g}–{v.max():.3g}.")
+        out["tables"].append(table("qc", per_sample, 500))
+    elif run.file("atac_qc.csv"):
+        removed: dict[str, int] = {}
+        why: dict[str, int] = {}
+        header = run.csv("atac_qc.csv", "sample_id", "passed", nrows=0)
+        if header is not None:
+            use = ["sample_id", "passed"] + (["reason"] if "reason" in header.columns else [])
+            for chunk in inp.csv_chunks(run.file("atac_qc.csv"), usecols=use, dtype=str, chunksize=LABELS_CHUNK):
+                fail = chunk[~chunk["passed"].map(truthy)]
+                for k, v in fail["sample_id"].value_counts().items():
+                    removed[k] = removed.get(k, 0) + int(v)
+                if "reason" in fail:
+                    for k, v in fail["reason"].fillna("").value_counts().items():
+                        why[k] = why.get(k, 0) + int(v)
+            out["observations"].append(f"ATAC QC removed {count(sum(removed.values()))} barcodes"
+                                       + (": " + joined([f"{k} {count(v)}" for k, v in sorted(why.items(), key=lambda x: -x[1])[:6]])
+                                          if why else "") + ".")
+            out["tables"].append(table("barcodes removed by ATAC QC, per sample",
+                                       pd.DataFrame({"sample_id": list(removed), "n_removed": list(removed.values())}), 500))
+    generic(run, out, max_items, skip_tables=("qc_summary.csv",))
     out["caveats"].append("ATAC signal is sparse per nucleus (a few thousand fragments); TSS enrichment and fragment "
                           "counts depend on the chemistry and sequencing depth, so compare samples with care.")
     return out

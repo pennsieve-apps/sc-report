@@ -97,7 +97,7 @@ inputs:
     placement: subfolder
     required: false
   - name: atac
-    description: atac-prep's QC tables (atac_qc.csv, summary.json, figures, provenance.json; .h5ad files are not read).
+    description: atac-prep's QC output (qc_summary.csv per sample, atac_qc.csv per barcode with passed/reason, summary.json, figures, provenance.json; .h5ad files are not read).
     mediaTypes: [text/csv, image/png, application/json]
     placement: subfolder
     required: false
