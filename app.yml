@@ -116,3 +116,11 @@ outputs:
       composition_by_condition, markers_top, composition_tests, de_summary, de_top_genes, atac_qc,
       methods, citations; each only when its section has inputs), summary.json and provenance.json.
     mediaTypes: [text/csv, application/json]
+
+# How a release is tested before it is made public: the inputs a review run uses.
+# See app-deploy-service docs/app-manifest-review.md.
+review:
+  version: 1
+  generate:
+    command: python -m tests.make_fixture "$REVIEW_INPUT_DIR" --layout both --workflow ab
+    root: linked
