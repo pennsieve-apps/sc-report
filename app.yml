@@ -27,9 +27,6 @@ application:
     - cell-typing
     - differential-expression
     - gene-regulation
-    - neuroscience
-    - pain
-    - musculoskeletal
 runtime:
   cpu: 1024
   # Reads summary tables and labels.csv (in chunks, three columns), never per-cell matrices; see
